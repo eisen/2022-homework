@@ -9,25 +9,25 @@ class Node {
     constructor(nodeName, parentName) {
 
         /** String of Node Name */
-        this.name = nodeName;
+        this.name = nodeName
 
         /** String of Parent Name */
-        this.parentName = parentName;
+        this.parentName = parentName
 
         /** Reference to parent Node Object. */
-        this.parentNode = null;
+        this.parentNode = null
 
         /** Array of Children. */
-        this.children = [];
+        this.children = []
 
         /** Level of the node. */
-        this.level = null;
+        this.level = null
 
         /**
          * Position of the node.
          * Initialize to -1
          */
-        this.position = -1;
+        this.position = -1
     }
 
     /**
@@ -35,8 +35,6 @@ class Node {
      * @param {Node} childNode - add a child to this node.
      */
     addChild(childNode) {
-        this.children.push(childNode);
+        this.children.push(childNode)
     }
-
-
 }
