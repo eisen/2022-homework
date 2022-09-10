@@ -58,6 +58,8 @@
     changeData()
   }
 
+  const SVGvalue = svg => svg.baseVal.valueAsString
+
   function setup() {
 
     // Fill in some d3 setting up here if you need
@@ -191,15 +193,30 @@
       .attr('transform', `translate(${MARGIN.left}, ${MARGIN.top})`)
       .selectAll('rect')
       .data(chart.data, el => el[metric])
-      .join('rect')
-      .attr('x', (el, idx) => idx * (barW + gap) + gap / 2)
-      .attr('width', (el, idx) => barW)
-      .attr('y', height)
-      .attr('height', 0)
-      .transition()
-      .duration(ANIMATION_DURATION)
-      .attr('y', el => height - chart.yScale(el[metric]))
-      .attr('height', el => chart.yScale(el[metric]))
+      .join(
+        (enter) => {
+          return enter.append('rect')
+            .on('mouseover', el => d3.select(el.target).classed('hovered', true))
+            .on('mouseout', el => d3.select(el.target).classed('hovered', false))
+            .attr('x', (el, idx) => idx * (barW + gap) + gap / 2)
+            .attr('width', (el, idx) => barW)
+            .attr('y', height)
+            .attr('height', 0)
+            .attr('opacity', 0)
+            .transition()
+            .duration(ANIMATION_DURATION)
+            .attr('y', el => height - chart.yScale(el[metric]))
+            .attr('height', el => chart.yScale(el[metric]))
+            .attr('opacity', 1)
+        },
+        (exit) => {
+          return exit.transition()
+            .duration(ANIMATION_DURATION)
+            .attr('opacity', 0)
+            .attr('y', height)
+            .attr('height', 0)
+            .remove()
+        })
   }
 
   /**
@@ -226,13 +243,25 @@
       .attr('transform', `translate(${MARGIN.left}, ${MARGIN.top})`)
       .selectAll('circle')
       .data(chart.data)
-      .join('circle')
-      .attr('cx', el => chart.xScale(el.cases) )
-      .attr('cy', el => height - chart.yScale(el.deaths) )
-      .attr('r', 0)
-      .transition()
-      .duration(ANIMATION_DURATION)
-      .attr('r', 5)
+      .join(
+        (enter) => {
+          return enter.append('circle')
+            .on('click', el => console.log(`x: ${SVGvalue(el.target.cx)}, y: ${SVGvalue(el.target.cy)}`))
+            .on('mouseover', el => d3.select(el.target).classed('hovered', true))
+            .on('mouseout', el => d3.select(el.target).classed('hovered', false))
+            .attr('cx', el => chart.xScale(el.cases))
+            .attr('cy', el => height - chart.yScale(el.deaths))
+            .attr('r', 0)
+            .transition()
+            .duration(ANIMATION_DURATION)
+            .attr('r', 7)
+        },
+        (exit) => {
+          return exit.transition()
+            .duration(ANIMATION_DURATION)
+            .attr('r', 0)
+            .remove()
+        })
   }
 
 
