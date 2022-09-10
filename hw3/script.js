@@ -6,8 +6,8 @@
   const MARGIN = { left: 50, bottom: 20, top: 20, right: 20 }
   const ANIMATION_DURATION = 300
 
-  const width = 800 - MARGIN.left - MARGIN.right
-  const height = 500 - MARGIN.top - MARGIN.bottom
+  const width = CHART_WIDTH - MARGIN.left - MARGIN.right
+  const height = CHART_HEIGHT - MARGIN.top - MARGIN.bottom
 
   let dataset = 'covid_utah'
   let metric = 'deaths'
@@ -65,7 +65,6 @@
         .append('svg')
         .attr("width", width + MARGIN.left + MARGIN.right)
         .attr("height", height + MARGIN.top + MARGIN.bottom)
-        .append('g')
     }
 
     changeData()
@@ -76,11 +75,11 @@
    * @param data
    */
   function update(data) {
-    console.log(data)
+
     // ****** TODO ******
     const xScale = d3.scaleTime()
       .domain(d3.extent(data, el => new Date(el.date)))
-      .range([0, width])
+      .range([0, width - MARGIN.right])
       .nice()
 
     const maxY = d3.max(data, el => el[metric])
@@ -137,8 +136,10 @@
     charts.map(chart => {
       // Scatter plot uses a different horizontal axis
       if (chart.id === '#Scatterplot-div') {
+        chart.xScale = xScaleScatter
         chart.xAxis = xAxisScatter
       } else {
+        chart.xScale = xScale
         chart.xAxis = xAxis
       }
 
@@ -152,11 +153,13 @@
         .call(chart.xAxis)
 
       // Add vertical axis
+      chart.yScale = yScale
       chart.yAxis = yAxis
       chart.el.append('g')
         .attr('transform', `translate(${MARGIN.left}, ${MARGIN.top})`)
         .call(chart.yAxis)
 
+      chart.data = data
       chart.update(chart)
     })
   }
@@ -166,7 +169,29 @@
    */
 
   function updateBarChart(chart) {
+    const gap = 10
+    const barW = ((width - MARGIN.right) / (chart.data.length - 1)) - gap
 
+    // shift x-axis and remove line
+    chart.el.select('.x-axis')
+      .attr('transform', `translate(${MARGIN.left + (barW + gap) / 2}, ${height + MARGIN.top})`)
+      .select('.domain')
+      .remove()
+
+    chart.el.append('g')
+      .classed('bar-chart', true)
+      .attr('transform', `translate(${MARGIN.left}, ${MARGIN.top})`)
+      .selectAll('rect')
+      .data(chart.data, el => el[metric])
+      .join('rect')
+      .attr('x', (el, idx) => idx * (barW + gap) + gap / 2)
+      .attr('width', (el, idx) => barW)
+      .attr('y', height)
+      .attr('height', 0)
+      .transition()
+      .duration(ANIMATION_DURATION)
+      .attr('y', el => height - chart.yScale(el[metric]))
+      .attr('height', el => chart.yScale(el[metric]))
   }
 
   /**
