@@ -13,6 +13,13 @@
   let metric = 'deaths'
   let randomData = false
 
+  const xAxis = d3.axisBottom()
+    .tickFormat(d3.timeFormat('%m/%d'))
+
+  const yAxis = d3.axisLeft()
+
+  const xAxisScatter = d3.axisBottom()
+
   const charts = [
     {
       id: '#Barchart-div',
@@ -65,6 +72,16 @@
         .append('svg')
         .attr("width", width + MARGIN.left + MARGIN.right)
         .attr("height", height + MARGIN.top + MARGIN.bottom)
+
+      // Add horizontal axis
+      chart.el.append('g')
+        .classed('x-axis', true)
+        .attr('transform', `translate(${MARGIN.left}, ${height + MARGIN.top})`)
+
+      // Add vertical axis
+      chart.el.append('g')
+        .classed('y-axis', true)
+        .attr('transform', `translate(${MARGIN.left}, ${MARGIN.top})`)
     }
 
     changeData()
@@ -82,6 +99,8 @@
       .range([0, width - MARGIN.right])
       .nice()
 
+    xAxis.scale(xScale)
+
     const maxY = d3.max(data, el => el[metric])
 
     const yScale = d3.scaleLinear()
@@ -89,12 +108,7 @@
       .range([height, 0]) // invert axis
       .nice()
 
-    const xAxis = d3.axisBottom()
-      .scale(xScale)
-      .tickFormat(d3.timeFormat('%m/%d'))
-
-    const yAxis = d3.axisLeft()
-      .scale(yScale)
+    yAxis.scale(yScale)
 
     // Syntax for line generator.
     // when updating the path for line chart, use the function as the input for 'd' attribute.
@@ -128,8 +142,7 @@
       .range([0, width]) // invert axis
       .nice()
 
-    const xAxisScatter = d3.axisBottom()
-      .scale(xScaleScatter)
+    xAxisScatter.scale(xScaleScatter)
 
     //TODO 
     // call each update function below, adjust the input for the functions if you need to.
@@ -143,20 +156,15 @@
         chart.xAxis = xAxis
       }
 
-      // Clear old axis
-      chart.el.selectAll('g').remove()
-
-      // Add horizontal axis
-      chart.el.append('g')
-        .classed('x-axis', true)
-        .attr('transform', `translate(${MARGIN.left}, ${height + MARGIN.top})`)
-        .call(chart.xAxis)
-
-      // Add vertical axis
       chart.yScale = yScale
       chart.yAxis = yAxis
-      chart.el.append('g')
-        .attr('transform', `translate(${MARGIN.left}, ${MARGIN.top})`)
+
+      // Update horizontal axis
+      chart.el.select('.x-axis')
+        .call(chart.xAxis)
+
+      // Update vertical axis
+      chart.el.select('.y-axis')
         .call(chart.yAxis)
 
       chart.data = data
