@@ -1,24 +1,45 @@
 // Constants for the charts, that would be useful.
-const CHART_WIDTH = 500;
-const CHART_HEIGHT = 250;
-const MARGIN = { left: 50, bottom: 20, top: 20, right: 20 };
-const ANIMATION_DUATION = 300;
+const CHART_WIDTH = 500
+const CHART_HEIGHT = 250
+const MARGIN = { left: 50, bottom: 20, top: 20, right: 20 }
+const ANIMATION_DURATION = 300
 
-setup();
 
-function setup () {
+const datasetChanged = (el) => {
+  const newValue = el.target.value
+
+  console.log(newValue)
+}
+
+const metricChanged = (el) => {
+  const newValue = el.target.value
+
+  console.log(newValue)
+}
+
+const randomChanged = (el) => {
+  const newValue = el.target.checked
+
+  console.log(newValue)
+}
+
+function setup() {
 
   // Fill in some d3 setting up here if you need
   // for example, svg for each chart, g for axis and shapes
 
-  changeData();
+  document.getElementById('dataset').onchange = datasetChanged
+  document.getElementById('metric').onchange = metricChanged
+  document.getElementById('random').onchange = randomChanged
+
+    changeData()
 }
 
 /**
  * Render the visualizations
  * @param data
  */
-function update (data) {
+function update(data) {
 
   // ****** TODO ******
 
@@ -56,21 +77,21 @@ function update (data) {
  * Update the bar chart
  */
 
-function updateBarChart () {
+function updateBarChart() {
 
 }
 
 /**
  * Update the line chart
  */
-function updateLineChart () {
+function updateLineChart() {
 
 }
 
 /**
  * Update the area chart 
  */
-function updateAreaChart () {
+function updateAreaChart() {
 
 }
 
@@ -78,7 +99,7 @@ function updateAreaChart () {
  * update the scatter plot.
  */
 
-function updateScatterPlot () {
+function updateScatterPlot() {
 
 }
 
@@ -86,9 +107,9 @@ function updateScatterPlot () {
 /**
  * Update the data according to document settings
  */
-function changeData () {
+function changeData() {
   //  Load the file indicated by the select menu
-  const dataFile = d3.select('#dataset').property('value');
+  const dataFile = d3.select('#dataset').property('value')
 
   d3.csv(`data/${dataFile}.csv`)
     .then(dataOutput => {
@@ -109,23 +130,25 @@ function changeData () {
         cases: parseInt(d.cases),
         deaths: parseInt(d.deaths),
         date: d3.timeFormat("%m/%d")(d3.timeParse("%d-%b")(d.date))
-      }));
+      }))
       if (document.getElementById('random').checked) {
         // if random subset is selected
-        update(randomSubset(dataResult));
+        update(randomSubset(dataResult))
       } else {
-        update(dataResult);
+        update(dataResult)
       }
     }).catch(e => {
-      console.log(e);
-      alert('Error!');
-    });
+      console.log(e)
+      alert('Error!')
+    })
 }
 
 /**
  *  Slice out a random chunk of the provided in data
  *  @param data
  */
-function randomSubset (data) {
-  return data.filter((d) => Math.random() > 0.5);
+function randomSubset(data) {
+  return data.filter((d) => Math.random() > 0.5)
 }
+
+setup()
