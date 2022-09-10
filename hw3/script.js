@@ -213,7 +213,18 @@
    */
 
   function updateScatterPlot(chart) {
-
+    chart.el.append('g')
+      .classed('scatter-plot', true)
+      .attr('transform', `translate(${MARGIN.left}, ${MARGIN.top})`)
+      .selectAll('circle')
+      .data(chart.data)
+      .join('circle')
+      .attr('cx', el => chart.xScale(el.cases) )
+      .attr('cy', el => height - chart.yScale(el.deaths) )
+      .attr('r', 0)
+      .transition()
+      .duration(ANIMATION_DURATION)
+      .attr('r', 5)
   }
 
 
