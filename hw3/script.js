@@ -177,7 +177,7 @@
 
   function updateBarChart(chart) {
     const gap = 10
-    const barW = ((width - MARGIN.right) / (chart.data.length - 1)) - gap
+    const barW = ((width - MARGIN.right) / (chart.xScale.ticks().length - 1))
 
     // shift x-axis and remove line
     chart.el.select('.x-axis')
@@ -195,8 +195,8 @@
           return enter.append('rect')
             .on('mouseover', el => d3.select(el.target).classed('hovered', true))
             .on('mouseout', el => d3.select(el.target).classed('hovered', false))
-            .attr('x', (el, idx) => idx * (barW + gap) + gap / 2)
-            .attr('width', (el, idx) => barW)
+            .attr('x', (el, idx) => gap + chart.xScale(new Date(el.date)))
+            .attr('width', (el, idx) => barW - gap)
             .attr('y', height)
             .attr('height', 0)
             .attr('opacity', 0)
