@@ -25,22 +25,18 @@
   const charts = [
     {
       id: '#Barchart-div',
-      el: null,
       update: (el) => updateBarChart(el)
     },
     {
       id: '#Linechart-div',
-      el: null,
       update: (el) => updateLineChart(el)
     },
     {
       id: '#Areachart-div',
-      el: null,
       update: (el) => updateAreaChart(el)
     },
     {
       id: '#Scatterplot-div',
-      el: null,
       update: (el) => updateScatterPlot(el)
     }
   ]
