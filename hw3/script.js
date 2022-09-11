@@ -116,17 +116,6 @@
 
     yAxis.scale(yScale)
 
-    // Syntax for area generator.
-    // the area is bounded by upper and lower lines. So you can specify x0, x1, y0, y1 seperately. 
-    // Here, since the area chart will have upper and lower sharing the x coordinates, we can just use x(). 
-    // Similarly, use the function as the input for 'd' attribute. 
-
-    // const areaGenerator = d3.area()
-    //   .x(d => the x coordinates for upper and lower lines, both x0 and x1)
-    //   .y1(d => the y coordinate for the upper line)
-    //   .y0(d=> the base line y coordinate for the area);
-
-
     //Set up scatter plot x and y axis. 
     //Since we are mapping death and case, we need new scales instead of the ones above. 
     //Cases would be the horizontal axis, so we need to use width related constants.
@@ -247,7 +236,31 @@
    * Update the area chart 
    */
   function updateAreaChart(chart) {
+    const barW = ((width - MARGIN.right) / (chart.data.length - 1))
+    const content = chart.el.select('.content')
 
+    // Syntax for area generator.
+    // the area is bounded by upper and lower lines. So you can specify x0, x1, y0, y1 separately. 
+    // Here, since the area chart will have upper and lower sharing the x coordinates, we can just use x(). 
+    // Similarly, use the function as the input for 'd' attribute. 
+
+    // const areaGenerator = d3.area()
+    //   .x(d => the x coordinates for upper and lower lines, both x0 and x1)
+    //   .y1(d => the y coordinate for the upper line)
+    //   .y0(d=> the base line y coordinate for the area)
+
+    const areaGen = d3.area()
+      .x((el, idx) => idx * barW)
+      .y1(el => chart.yScale(el[metric]))
+      .y0(el => chart.yScale(0))
+
+    content.select('path')
+      .remove()
+
+    content.append('path')
+      .classed('area-chart', true)
+      .datum(chart.data)
+      .attr('d', areaGen)
   }
 
   /**
