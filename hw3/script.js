@@ -20,6 +20,8 @@
 
   const xAxisScatter = d3.axisBottom()
 
+  const yAxisScatter = d3.axisLeft()
+
   const charts = [
     {
       id: '#Barchart-div',
@@ -122,6 +124,7 @@
     //Deaths would be vertical axis, so that would need to use height related constants.
 
     const maxX = d3.max(data, el => el.cases)
+    const maxYScatter = d3.max(data, el => el.deaths)
 
     const xScaleScatter = d3.scaleLinear()
       .domain([0, maxX])
@@ -130,6 +133,13 @@
 
     xAxisScatter.scale(xScaleScatter)
 
+    const yScaleScatter = d3.scaleLinear()
+      .domain([0, maxYScatter])
+      .range([height, 0]) // invert axis
+      .nice()
+
+    yAxisScatter.scale(yScaleScatter)
+
     //TODO 
     // call each update function below, adjust the input for the functions if you need to.
     charts.map(chart => {
@@ -137,20 +147,27 @@
       if (chart.id === '#Scatterplot-div') {
         chart.xScale = xScaleScatter
         chart.xAxis = xAxisScatter
+
+        chart.yScale = yScaleScatter
+        chart.yAxis = yAxisScatter
       } else {
         chart.xScale = xScale
         chart.xAxis = xAxis
-      }
 
-      chart.yScale = yScale
-      chart.yAxis = yAxis
+        chart.yScale = yScale
+        chart.yAxis = yAxis
+      }
 
       // Update horizontal axis
       chart.el.select('.x-axis')
+        .transition()
+        .duration(ANIMATION_DURATION)
         .call(chart.xAxis)
 
       // Update vertical axis
       chart.el.select('.y-axis')
+        .transition()
+        .duration(ANIMATION_DURATION)
         .call(chart.yAxis)
 
       chart.data = data
@@ -193,6 +210,12 @@
             .attr('height', el => chart.yScale(el[metric]))
             .attr('opacity', 1)
         },
+        (update) => {
+          return update.transition()
+            .duration(ANIMATION_DURATION)
+            .attr('y', el => height - chart.yScale(el[metric]))
+            .attr('height', el => chart.yScale(el[metric]))
+        },
         (exit) => {
           return exit.transition()
             .duration(ANIMATION_DURATION)
@@ -223,13 +246,29 @@
       .x((el, idx) => idx * barW)
       .y(el => chart.yScale(el[metric]))
 
-    content.select('path')
-      .remove()
-
-    content.append('path')
-      .classed('line-chart', true)
-      .datum(chart.data)
-      .attr('d', lineGen)
+    content.selectAll('path')
+      .data([chart.data[0]]) // create a one object array to activate the join
+      .join(
+        (enter) => {
+          return enter.append('path')
+            .classed('line-chart', true)
+            .datum(chart.data)
+            .attr('d', lineGen)
+        },
+        (update) => {
+          return update.datum(chart.data)
+            .transition()
+            .duration(ANIMATION_DURATION)
+            .attr('d', lineGen)
+        },
+        (exit) => {
+          return exit.datum(chart.data)
+            .transition()
+            .duration(ANIMATION_DURATION)
+            .attr('opacity', 0)
+            .remove()
+        }
+      )
   }
 
   /**
@@ -254,13 +293,28 @@
       .y1(el => chart.yScale(el[metric]))
       .y0(el => chart.yScale(0))
 
-    content.select('path')
-      .remove()
-
-    content.append('path')
-      .classed('area-chart', true)
-      .datum(chart.data)
-      .attr('d', areaGen)
+    content.selectAll('path')
+      .data([chart.data[0]]) // create a one object array to activate the join
+      .join(
+        (enter) => {
+          return enter.append('path')
+            .classed('area-chart', true)
+            .datum(chart.data)
+            .attr('d', areaGen)
+        },
+        (update) => {
+          return update.datum(chart.data)
+            .transition()
+            .duration(ANIMATION_DURATION)
+            .attr('d', areaGen)
+        },
+        (exit) => {
+          return exit.datum(chart.data)
+            .transition()
+            .duration(ANIMATION_DURATION)
+            .attr('opacity', 0)
+            .remove()
+        })
   }
 
   /**
@@ -288,8 +342,8 @@
         },
         (update) => {
           return update.transition()
-          .attr('cx', el => chart.xScale(el.cases))
-          .attr('cy', el => height - chart.yScale(el.deaths))
+            .attr('cx', el => chart.xScale(el.cases))
+            .attr('cy', el => height - chart.yScale(el.deaths))
         },
         (exit) => {
           return exit.transition()
