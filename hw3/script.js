@@ -84,6 +84,10 @@
       chart.el.append('g')
         .classed('y-axis', true)
         .attr('transform', `translate(${MARGIN.left}, ${MARGIN.top})`)
+
+      chart.el.append('g')
+        .classed('content', true)
+        .attr('transform', `translate(${MARGIN.left}, ${MARGIN.top})`)
     }
 
     changeData()
@@ -112,15 +116,6 @@
 
     yAxis.scale(yScale)
 
-    // Syntax for line generator.
-    // when updating the path for line chart, use the function as the input for 'd' attribute.
-    // https://github.com/d3/d3-shape/blob/main/README.md
-
-
-    // const lineGenerator = d3.line()
-    //   .x(d => the x coordinate for a point of the line)
-    //   .y(d => the y coordinate for a point of the line);
-
     // Syntax for area generator.
     // the area is bounded by upper and lower lines. So you can specify x0, x1, y0, y1 seperately. 
     // Here, since the area chart will have upper and lower sharing the x coordinates, we can just use x(). 
@@ -141,7 +136,7 @@
 
     const xScaleScatter = d3.scaleLinear()
       .domain([0, maxX])
-      .range([0, width]) // invert axis
+      .range([0, width])
       .nice()
 
     xAxisScatter.scale(xScaleScatter)
@@ -188,10 +183,10 @@
       .select('.domain')
       .remove()
 
-    chart.el.append('g')
+    const content = chart.el.select('.content')
       .classed('bar-chart', true)
-      .attr('transform', `translate(${MARGIN.left}, ${MARGIN.top})`)
-      .selectAll('rect')
+
+    content.selectAll('rect')
       .data(chart.data, el => el[metric])
       .join(
         (enter) => {
@@ -223,7 +218,29 @@
    * Update the line chart
    */
   function updateLineChart(chart) {
+    const barW = ((width - MARGIN.right) / (chart.data.length - 1))
+    const content = chart.el.select('.content')
 
+    // Syntax for line generator.
+    // when updating the path for line chart, use the function as the input for 'd' attribute.
+    // https://github.com/d3/d3-shape/blob/main/README.md
+
+
+    // const lineGenerator = d3.line()
+    //   .x(d => the x coordinate for a point of the line)
+    //   .y(d => the y coordinate for a point of the line)
+
+    const lineGen = d3.line()
+      .x((el, idx) => idx * barW)
+      .y(el => chart.yScale(el[metric]))
+
+    content.select('path')
+      .remove()
+
+    content.append('path')
+      .classed('line-chart', true)
+      .datum(chart.data)
+      .attr('d', lineGen)
   }
 
   /**
@@ -238,10 +255,10 @@
    */
 
   function updateScatterPlot(chart) {
-    chart.el.append('g')
+    const content = chart.el.select('.content')
       .classed('scatter-plot', true)
-      .attr('transform', `translate(${MARGIN.left}, ${MARGIN.top})`)
-      .selectAll('circle')
+
+    content.selectAll('circle')
       .data(chart.data)
       .join(
         (enter) => {
