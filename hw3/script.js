@@ -157,13 +157,11 @@
       // Update horizontal axis
       chart.el.select('.x-axis')
         .transition()
-        .duration(ANIMATION_DURATION)
         .call(chart.xAxis)
 
       // Update vertical axis
       chart.el.select('.y-axis')
         .transition()
-        .duration(ANIMATION_DURATION)
         .call(chart.yAxis)
 
       chart.data = data
@@ -199,12 +197,10 @@
             .attr('width', (el, idx) => barW - gap)
             .attr('y', height)
             .attr('height', 0)
-            .attr('opacity', 0)
             .transition()
             .duration(ANIMATION_DURATION)
             .attr('y', el => height - chart.yScale(el[metric]))
             .attr('height', el => chart.yScale(el[metric]))
-            .attr('opacity', 1)
         },
         (update) => {
           return update.transition()
@@ -215,7 +211,6 @@
         (exit) => {
           return exit.transition()
             .duration(ANIMATION_DURATION)
-            .attr('opacity', 0)
             .attr('y', height)
             .attr('height', 0)
             .remove()
@@ -249,6 +244,10 @@
             .classed('line-chart', true)
             .datum(chart.data)
             .attr('d', lineGen)
+            .attr('opacity', 0)
+            .transition()
+            .duration(ANIMATION_DURATION)
+            .attr('opacity', 1)
         },
         (update) => {
           return update.datum(chart.data)
@@ -257,8 +256,7 @@
             .attr('d', lineGen)
         },
         (exit) => {
-          return exit.datum(chart.data)
-            .transition()
+          return exit.transition()
             .duration(ANIMATION_DURATION)
             .attr('opacity', 0)
             .remove()
@@ -282,7 +280,12 @@
     //   .y1(d => the y coordinate for the upper line)
     //   .y0(d=> the base line y coordinate for the area)
 
-    const areaGen = d3.area()
+    const areaGenStart = d3.area()
+      .x(el => chart.xScale(new Date(el.date)))
+      .y1(el => chart.yScale(0))
+      .y0(el => chart.yScale(0))
+
+    const areaGenEnd = d3.area()
       .x(el => chart.xScale(new Date(el.date)))
       .y1(el => chart.yScale(el[metric]))
       .y0(el => chart.yScale(0))
@@ -294,19 +297,20 @@
           return enter.append('path')
             .classed('area-chart', true)
             .datum(chart.data)
-            .attr('d', areaGen)
+            .attr('d', areaGenStart)
+            .transition()
+            .duration(ANIMATION_DURATION)
+            .attr('d', areaGenEnd)
         },
         (update) => {
           return update.datum(chart.data)
             .transition()
             .duration(ANIMATION_DURATION)
-            .attr('d', areaGen)
+            .attr('d', areaGenEnd)
         },
         (exit) => {
-          return exit.datum(chart.data)
-            .transition()
+          return exit.transition()
             .duration(ANIMATION_DURATION)
-            .attr('opacity', 0)
             .remove()
         })
   }
