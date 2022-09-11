@@ -286,6 +286,11 @@
             .duration(ANIMATION_DURATION)
             .attr('r', 7)
         },
+        (update) => {
+          return update.transition()
+          .attr('cx', el => chart.xScale(el.cases))
+          .attr('cy', el => height - chart.yScale(el.deaths))
+        },
         (exit) => {
           return exit.transition()
             .duration(ANIMATION_DURATION)
