@@ -226,7 +226,6 @@
    * Update the line chart
    */
   function updateLineChart(chart) {
-    const barW = ((width - MARGIN.right) / (chart.data.length - 1))
     const content = chart.el.select('.content')
 
     // Syntax for line generator.
@@ -239,7 +238,7 @@
     //   .y(d => the y coordinate for a point of the line)
 
     const lineGen = d3.line()
-      .x((el, idx) => idx * barW)
+      .x(el => chart.xScale(new Date(el.date)))
       .y(el => chart.yScale(el[metric]))
 
     content.selectAll('path')
@@ -271,7 +270,6 @@
    * Update the area chart 
    */
   function updateAreaChart(chart) {
-    const barW = ((width - MARGIN.right) / (chart.data.length - 1))
     const content = chart.el.select('.content')
 
     // Syntax for area generator.
@@ -285,7 +283,7 @@
     //   .y0(d=> the base line y coordinate for the area)
 
     const areaGen = d3.area()
-      .x((el, idx) => idx * barW)
+      .x(el => chart.xScale(new Date(el.date)))
       .y1(el => chart.yScale(el[metric]))
       .y0(el => chart.yScale(0))
 
