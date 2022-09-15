@@ -63,9 +63,9 @@
     // Fill in some d3 setting up here if you need
     // for example, svg for each chart, g for axis and shapes
 
-    document.getElementById('dataset').onchange = datasetChanged
-    document.getElementById('metric').onchange = metricChanged
-    document.getElementById('random').onchange = randomChanged
+    d3.select('#dataset').on('change', datasetChanged)
+    d3.select('#metric').on('change', metricChanged)
+    d3.select('#random').on('change', randomChanged)
 
     for (const chart of charts) {
       chart.el = d3.select(chart.id)
