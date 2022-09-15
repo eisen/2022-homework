@@ -357,8 +357,6 @@
    */
   function changeData() {
     //  Load the file indicated by the select menu
-    // const dataFile = d3.select('#dataset').property('value')
-
     d3.csv(`data/${dataset}.csv`)
       .then(dataOutput => {
 
