@@ -2,6 +2,12 @@
 class MapVis {
 
   svg = null
+  totalCases = 0
+  colorScale = null
+
+
+  maxVal = (prev, next) => parseFloat(prev.total_cases_per_million) > parseFloat(next.total_cases_per_million) ? prev : next
+  casesForCountry = (iso_code) => this.globalApplicationState.covidData.filter(el => el.iso_code === iso_code && el.total_cases_per_million !== '')
 
   /**
    * Creates a Map Visuzation
@@ -11,6 +17,17 @@ class MapVis {
     this.globalApplicationState = globalApplicationState
 
     this.svg = d3.select('#map')
+
+    const startValue = this.globalApplicationState.covidData[0]
+    this.totalCases = this.globalApplicationState.covidData.filter(el => el.total_cases_per_million !== '')
+      .reduce(this.maxVal, startValue).total_cases_per_million
+
+    console.log(this.totalCases)
+
+    this.colorScale = d3.scaleLinear()
+      .domain([0, this.totalCases])
+      .range(['#FFFFFF', '#FF0000'])
+      .interpolate(d3.interpolateRgb)
 
     // Set up the map projection
     const projection = d3.geoWinkel3()
@@ -33,10 +50,6 @@ class MapVis {
     let graticuleUle = graticuleGen.lines()
     let graticuleOutline = graticuleGen.outline()
 
-    const lineGen = d3.line()
-      .x(el => projection(el)[0])
-      .y(el => projection(el)[1])
-
     ule.selectAll('path')
       .data(graticuleUle)
       .join(
@@ -46,9 +59,7 @@ class MapVis {
             .attr('fill', 'none')
             .attr('stroke', 'lightgray')
         },
-        (update) => {
-
-        },
+        (update) => { },
         (exit) => { }
       )
 
@@ -63,9 +74,7 @@ class MapVis {
             .attr('stroke', 'black')
             .attr('stroke-width', 2)
         },
-        (update) => {
-
-        },
+        (update) => { },
         (exit) => { }
       )
 
@@ -77,8 +86,27 @@ class MapVis {
         (enter) => {
           return enter.append('path')
             .attr('d', path)
-            .attr('fill', 'white')
-            .attr('stroke', 'black')
+            .attr('cursor', 'pointer')
+            .attr('fill', el => {
+              const id = el.id
+              if(id === '-99') return 0
+              
+              const countryCases = this.casesForCountry(id)
+              let countryTotal = 0
+              if (countryCases.length > 0) {
+                countryTotal = countryCases.reduce(this.maxVal, countryTotal).total_cases_per_million
+              }
+              return this.colorScale(countryTotal)
+            })
+            .attr('title', el => el.id)
+            .attr('stroke', 'gray')
+            .on('mouseover', el => {
+              d3.select(el.target)
+                .attr('stroke', 'black')
+                .raise()
+            })
+            .on('mouseout', el => d3.select(el.target)
+              .attr('stroke', 'gray'))
         },
         (update) => {
 

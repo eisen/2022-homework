@@ -28,7 +28,10 @@
     globalApplicationState.covidData = loadedData.covidData
 
     globalApplicationState.mapData = 
-      topojson.feature(loadedData.mapData, loadedData.mapData.objects.countries) 
+      topojson.feature(loadedData.mapData, loadedData.mapData.objects.countries)
+    
+    // Remove data with invalid iso codes
+    globalApplicationState.mapData.features = globalApplicationState.mapData.features.filter( feature =>feature.id !== '-99' ) 
 
     // Creates the view objects with the global state passed in 
     const worldMap = new MapVis(globalApplicationState)
