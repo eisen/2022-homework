@@ -19,11 +19,19 @@
 <body>
     <div class="header">
         <h1>COVID-19 World Case Tracker</h1>
-        <p>Name: Eisen Montalvo; E-Mail: <a href="mailto:eisen.montalvo@utah.edu">eisen.montalvo@utah.edu</a>; UID: u1368294</p>
+        <p>Name: Eisen Montalvo; E-Mail: <a href="mailto:eisen.montalvo@utah.edu">eisen.montalvo@utah.edu</a>; UID:
+            u1368294</p>
     </div>
 
     <div id="content">
         <svg id="map">
+            <defs>
+                <linearGradient id="Gradient" x1="0" x2="1" y1="0" y2="0">
+                    <stop offset="0%" stop-color="#fff5f0" />
+                    <stop offset="50%" stop-color="#f96c4f" />
+                    <stop offset="100%" stop-color="#68010d" />
+                </linearGradient>
+            </defs>
             <g id="graticules"></g>
             <g id="countries"></g>
         </svg>
@@ -31,7 +39,9 @@
             <g id="x-axis"></g>
             <g id="y-axis"></g>
             <g id="lines"></g>
-            <g id="overlay"><line></line></g>
+            <g id="overlay">
+                <line></line>
+            </g>
         </svg>
         <button id="clear-button">Clear Selected Countries</button>
     </div>

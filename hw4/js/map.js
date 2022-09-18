@@ -5,9 +5,40 @@ class MapVis {
   totalCases = 0
   colorScale = null
 
+  width = 800
+  height = 500
 
-  maxVal = (prev, next) => parseFloat(prev.total_cases_per_million) > parseFloat(next.total_cases_per_million) ? prev : next
-  casesForCountry = (iso_code) => this.globalApplicationState.covidData.filter(el => el.iso_code === iso_code && el.total_cases_per_million !== '')
+  legend_height = 15
+  legend_width = 200
+
+  MaxVal = (prev, next) => parseFloat(prev.total_cases_per_million) > parseFloat(next.total_cases_per_million) ? prev : next
+  CasesForCountry = (iso_code) => this.globalApplicationState.covidData.filter(el => el.iso_code === iso_code && el.total_cases_per_million !== '')
+
+  CreateLegend = () => {
+    const legend = this.svg
+      .append('g')
+      .classed('legend', true)
+      .attr('transform', `translate(0, ${this.height - this.legend_height})`)
+
+    legend.append('text')
+      .text('0')
+      .attr('y', -5)
+
+    const text_format = d3.formatPrefix(',.0', 1e3)
+    legend.append('text')
+      .text(text_format(this.totalCases))
+      .attr('x', this.legend_width)
+      .attr('y', -5)
+      .attr('text-anchor', 'end')
+
+    legend.append('rect')
+      .attr('rx', 7)
+      .attr('ry', 7)
+      .attr('width', this.legend_width)
+      .attr('height', this.legend_height)
+      .attr('fill', 'url(#Gradient)')
+      .attr('stroke', 'black')
+  }
 
   /**
    * Creates a Map Visuzation
@@ -20,19 +51,19 @@ class MapVis {
 
     const startValue = this.globalApplicationState.covidData[0]
     this.totalCases = this.globalApplicationState.covidData.filter(el => el.total_cases_per_million !== '')
-      .reduce(this.maxVal, startValue).total_cases_per_million
+      .reduce(this.MaxVal, startValue).total_cases_per_million
 
-    console.log(this.totalCases)
+    this.CreateLegend()
 
     this.colorScale = d3.scaleLinear()
-      .domain([0, this.totalCases])
-      .range(['#FFFFFF', '#FF0000'])
+      .domain([0, this.totalCases / 2, this.totalCases])
+      .range(['#fff5f0', '#f96c4f', '#68010d'])
       .interpolate(d3.interpolateRgb)
 
     // Set up the map projection
     const projection = d3.geoWinkel3()
       .scale(150) // This set the size of the map
-      .translate([400, 250]) // This moves the map to the center of the SVG
+      .translate([this.width / 2, this.height / 2]) // This moves the map to the center of the SVG
 
     let path = d3.geoPath()
       .projection(projection)
@@ -88,25 +119,22 @@ class MapVis {
             .attr('d', path)
             .attr('cursor', 'pointer')
             .attr('fill', el => {
-              const id = el.id
-              if(id === '-99') return 0
-              
-              const countryCases = this.casesForCountry(id)
+              const countryCases = this.CasesForCountry(el.id)
               let countryTotal = 0
               if (countryCases.length > 0) {
-                countryTotal = countryCases.reduce(this.maxVal, countryTotal).total_cases_per_million
+                countryTotal = countryCases.reduce(this.MaxVal, countryTotal).total_cases_per_million
               }
               return this.colorScale(countryTotal)
             })
             .attr('title', el => el.id)
-            .attr('stroke', 'gray')
+            .attr('stroke', 'lightgray')
             .on('mouseover', el => {
               d3.select(el.target)
-                .attr('stroke', 'black')
+                .attr('stroke', 'gray')
                 .raise()
             })
             .on('mouseout', el => d3.select(el.target)
-              .attr('stroke', 'gray'))
+              .attr('stroke', 'lightgray'))
         },
         (update) => {
 
