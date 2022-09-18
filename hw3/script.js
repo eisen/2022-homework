@@ -186,6 +186,10 @@
     const content = chart.el.select('.content')
       .classed('bar-chart', true)
 
+    if(random) {
+      content.selectAll('rect').remove()
+    }
+
     content.selectAll('rect')
       .data(chart.data, el => el[metric])
       .join(
@@ -194,19 +198,19 @@
             .on('mouseover', el => d3.select(el.target).classed('hovered', true))
             .on('mouseout', el => d3.select(el.target).classed('hovered', false))
             .attr('x', (el, idx) => gap + chart.xScale(new Date(el.date)))
-            .attr('width', (el, idx) => barW - gap)
+            .attr('width', (el, idx) => barW - gap )
             .attr('y', height)
             .attr('height', 0)
             .transition()
             .duration(ANIMATION_DURATION)
-            .attr('y', el => height - chart.yScale(el[metric]))
-            .attr('height', el => chart.yScale(el[metric]))
+            .attr('y', el => chart.yScale(el[metric]))
+            .attr('height', el => height - chart.yScale(el[metric]))
         },
         (update) => {
           return update.transition()
             .duration(ANIMATION_DURATION)
-            .attr('y', el => height - chart.yScale(el[metric]))
-            .attr('height', el => chart.yScale(el[metric]))
+            .attr('y', el => chart.yScale(el[metric]))
+            .attr('height', el => height - chart.yScale(el[metric]))
         },
         (exit) => {
           return exit.transition()
