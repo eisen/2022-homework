@@ -1,9 +1,9 @@
 /** Class representing the map view. */
 class MapVis {
-
   svg = null
   totalCases = 0
   colorScale = null
+  sel = null
 
   width = 800
   height = 500
@@ -20,6 +20,7 @@ class MapVis {
      */
   constructor(globalApplicationState) {
     this.globalApplicationState = globalApplicationState
+    this.sel = this.globalApplicationState.selectedLocations
 
     this.svg = d3.select('#map')
 
@@ -128,32 +129,56 @@ class MapVis {
           return enter.append('path')
             .attr('d', path)
             .attr('cursor', 'pointer')
-            .attr('fill', el => {
-              const countryCases = this.CasesForCountry(el.id)
-              let countryTotal = 0
-              if (countryCases.length > 0) {
-                countryTotal = countryCases.reduce(this.MaxVal, countryTotal).total_cases_per_million
-              }
-              return this.colorScale(countryTotal)
-            })
+            .attr('fill', this.GetCountryFill)
             .attr('title', el => el.id)
             .attr('stroke', 'lightgray')
-            .on('mouseover', el => {
-              d3.select(el.target)
-                .attr('stroke', 'gray')
-                .raise()
-            })
-            .on('mouseout', el => d3.select(el.target)
-              .attr('stroke', 'lightgray'))
+            .on('mouseover', this.OnMouseOver)
+            .on('mouseout', this.OnMouseOut)
+            .on('click', el => this.updateSelectedCountries(el))
         },
-        (update) => {
-
-        },
+        (update) => { },
         (exit) => { }
       )
   }
 
-  updateSelectedCountries() {
+  GetCountryFill = el => {
+    const countryCases = this.CasesForCountry(el.id)
+    let countryTotal = 0
+    if (countryCases.length > 0) {
+      countryTotal = countryCases.reduce(this.MaxVal, countryTotal).total_cases_per_million
+    }
+    return this.colorScale(countryTotal)
+  }
 
+  OnMouseOver = el => {
+    const id = d3.select(el.target).attr('title')
+    if (this.sel.includes(id) === false) {
+      d3.select(el.target)
+        .attr('stroke', 'gray')
+        .raise()
+    }
+  }
+
+  OnMouseOut = el => {
+    const id = d3.select(el.target).attr('title')
+    if (this.sel.includes(id) === false) {
+      d3.select(el.target)
+        .attr('stroke', 'lightgray')
+        .lower()
+    }
+  }
+
+  updateSelectedCountries(el) {
+    const id = d3.select(el.target).attr('title')
+
+    if (this.sel.includes(id)) {
+      d3.select(el.target).attr('stroke', 'lightgray').lower()
+      const idx = this.sel.findIndex(el => el === id)
+      this.sel.splice(idx, 1) // Remove it
+    } else {
+      d3.select(el.target).attr('stroke', 'black').raise()
+      this.sel.push(id) // Add it
+    }
+    console.log(this.sel)
   }
 }
