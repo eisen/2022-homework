@@ -14,6 +14,38 @@ class MapVis {
   MaxVal = (prev, next) => parseFloat(prev.total_cases_per_million) > parseFloat(next.total_cases_per_million) ? prev : next
   CasesForCountry = (iso_code) => this.globalApplicationState.covidData.filter(el => el.iso_code === iso_code && el.total_cases_per_million !== '')
 
+  /**
+     * Creates a Map Visuzation
+     * @param globalApplicationState The shared global application state (has the data and the line chart instance in it)
+     */
+  constructor(globalApplicationState) {
+    this.globalApplicationState = globalApplicationState
+
+    this.svg = d3.select('#map')
+
+    const startValue = this.globalApplicationState.covidData[0]
+    this.totalCases = this.globalApplicationState.covidData.filter(el => el.total_cases_per_million !== '')
+      .reduce(this.MaxVal, startValue).total_cases_per_million
+
+    this.CreateLegend()
+
+    this.colorScale = d3.scaleLinear()
+      .domain([0, this.totalCases / 2, this.totalCases])
+      .range(['#fff5f0', '#f96c4f', '#68010d'])
+      .interpolate(d3.interpolateRgb)
+
+    // Set up the map projection
+    const projection = d3.geoWinkel3()
+      .scale(150) // This set the size of the map
+      .translate([this.width / 2, this.height / 2]) // This moves the map to the center of the SVG
+
+    let path = d3.geoPath()
+      .projection(projection)
+
+    this.RenderGraticule(path)
+    this.RenderCountries(path)
+  }
+
   CreateLegend = () => {
     const legend = this.svg
       .append('g')
@@ -40,46 +72,15 @@ class MapVis {
       .attr('stroke', 'black')
   }
 
-  /**
-   * Creates a Map Visuzation
-   * @param globalApplicationState The shared global application state (has the data and the line chart instance in it)
-   */
-  constructor(globalApplicationState) {
-    this.globalApplicationState = globalApplicationState
+  RenderGraticule = (path) => {
+    let graticuleGen = d3.geoGraticule()
 
-    this.svg = d3.select('#map')
-
-    const startValue = this.globalApplicationState.covidData[0]
-    this.totalCases = this.globalApplicationState.covidData.filter(el => el.total_cases_per_million !== '')
-      .reduce(this.MaxVal, startValue).total_cases_per_million
-
-    this.CreateLegend()
-
-    this.colorScale = d3.scaleLinear()
-      .domain([0, this.totalCases / 2, this.totalCases])
-      .range(['#fff5f0', '#f96c4f', '#68010d'])
-      .interpolate(d3.interpolateRgb)
-
-    // Set up the map projection
-    const projection = d3.geoWinkel3()
-      .scale(150) // This set the size of the map
-      .translate([this.width / 2, this.height / 2]) // This moves the map to the center of the SVG
-
-    let path = d3.geoPath()
-      .projection(projection)
-
+    // Render graticule ule
     let ule = this.svg.select('#graticules')
       .append('g')
       .classed('ule', true)
 
-    let outline = this.svg.select('#graticules')
-      .append('g')
-      .classed('outline', true)
-
-    let graticuleGen = d3.geoGraticule()
-
     let graticuleUle = graticuleGen.lines()
-    let graticuleOutline = graticuleGen.outline()
 
     ule.selectAll('path')
       .data(graticuleUle)
@@ -93,6 +94,13 @@ class MapVis {
         (update) => { },
         (exit) => { }
       )
+
+    // Render graticule outline
+    let outline = this.svg.select('#graticules')
+      .append('g')
+      .classed('outline', true)
+
+    let graticuleOutline = graticuleGen.outline()
 
     outline.selectAll('path')
       .data(graticuleOutline.coordinates)
@@ -108,9 +116,11 @@ class MapVis {
         (update) => { },
         (exit) => { }
       )
+  }
 
+  RenderCountries = (path) => {
+    // Render countries
     let countries = this.svg.select('#countries')
-
     countries.selectAll('path')
       .data(this.globalApplicationState.mapData.features)
       .join(
