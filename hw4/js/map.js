@@ -24,7 +24,7 @@ class MapVis {
     this.svg = d3.select('#map')
 
     const startValue = this.globalApplicationState.covidData[0]
-    this.totalCases = this.globalApplicationState.covidData.filter(el => el.total_cases_per_million !== '')
+    this.totalCases = this.globalApplicationState.covidData
       .reduce(this.MaxVal, startValue).total_cases_per_million
 
     this.CreateLegend()
