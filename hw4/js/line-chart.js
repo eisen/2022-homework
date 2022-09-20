@@ -17,7 +17,12 @@ class LineChart {
   xAxis = d3.axisBottom()
     .tickFormat(d3.timeFormat('%b %G'))
 
+  xScale = null
+
   yAxis = d3.axisLeft()
+  yScale = null
+
+  animationDuration = 300
 
   /**
    * Creates a LineChart
@@ -32,19 +37,19 @@ class LineChart {
 
     this.chartSVG = d3.select('#line-chart')
 
-    const xAxis = d3.select('#x-axis')
+    const xAxisGroup = d3.select('#x-axis')
       .attr('transform', `translate(${this.left}, ${this.height - this.bottom})`)
 
-    xAxis.append('text')
+    xAxisGroup.append('text')
       .attr('transform', `translate(${(this.width - this.left) / 2}, 40)`)
       .attr('fill', 'black')
       .attr('text-anchor', 'middle')
       .text('Date')
 
-    const yAxis = d3.select('#y-axis')
+    const yAxisGroup = d3.select('#y-axis')
       .attr('transform', `translate(${this.left}, ${this.top})`)
 
-    yAxis.append('text')
+    yAxisGroup.append('text')
       .attr('transform', `translate(-60, ${(this.height - this.bottom) / 2}) rotate(-90)`)
       .attr('fill', 'black')
       .attr('text-anchor', 'middle')
@@ -53,28 +58,63 @@ class LineChart {
     const earliestDate = this.EarliestDate(this.continents)
     const greatestDate = this.GreatestDate(this.continents)
 
-    const xScale = d3.scaleTime()
+    this.xScale = d3.scaleTime()
       .domain([earliestDate, greatestDate])
       .range([0, this.width])
       .nice()
 
-    this.xAxis.scale(xScale)
+    this.xAxis.scale(this.xScale)
 
-    xAxis.transition()
+    xAxisGroup.transition()
       .call(this.xAxis)
 
 
     const maxY = this.GreatestValue(this.continents)
 
-    const yScale = d3.scaleLinear()
+    this.yScale = d3.scaleLinear()
       .domain([0, maxY])
       .range([this.height - this.bottom - this.top, 0]) // invert axis
       .nice()
 
-    this.yAxis.scale(yScale)
+    this.yAxis.scale(this.yScale)
 
-    yAxis.transition()
+    yAxisGroup.transition()
       .call(this.yAxis)
+
+    const lineGen = d3.line()
+      .x(el => this.left + this.xScale(new Date(el.date)))
+      .y(el => this.yScale(el.total_cases_per_million) + this.top)
+
+    const content = this.chartSVG.select('#lines')
+
+    content.selectAll('path')
+      .data(this.continents) // create a one object array to activate the join
+      .join(
+        (enter) => {
+          return enter.append('path')
+            .classed('line-chart', true)
+            .datum(el => el[1])
+            .attr('d', lineGen)
+            .attr('fill', 'none')
+            .attr('stroke', 'black')
+            .attr('opacity', 0)
+            .transition()
+            .duration(this.animationDuration)
+            .attr('opacity', 1)
+        },
+        (update) => {
+          return update.datum(el => el[1])
+            .transition()
+            .duration(this.animationDuration)
+            .attr('d', lineGen)
+        },
+        (exit) => {
+          return exit.transition()
+            .duration(this.animationDuration)
+            .attr('opacity', 0)
+            .remove()
+        }
+      )
 
   }
 
