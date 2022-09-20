@@ -12,7 +12,7 @@ class MapVis {
   legend_width = 200
 
   MaxVal = (prev, next) => parseFloat(prev.total_cases_per_million) > parseFloat(next.total_cases_per_million) ? prev : next
-  CasesForCountry = (iso_code) => this.globalApplicationState.covidData.filter(el => el.iso_code === iso_code && el.total_cases_per_million !== '')
+  CasesForCountry = (iso_code) => this.globalApplicationState.covidData.filter(el => el.iso_code === iso_code)
 
   /**
      * Creates a Map Visuzation
@@ -179,6 +179,7 @@ class MapVis {
       d3.select(el.target).attr('stroke', 'black').raise()
       this.sel.push(id) // Add it
     }
-    console.log(this.sel)
+
+    this.globalApplicationState.lineChart.updateSelectedCountries()
   }
 }

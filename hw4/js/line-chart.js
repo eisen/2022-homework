@@ -22,7 +22,7 @@ class LineChart {
   yAxis = d3.axisLeft()
   yScale = null
 
-  animationDuration = 300
+  animationDuration = 1000
 
   /**
    * Creates a LineChart
@@ -33,89 +33,11 @@ class LineChart {
     this.globalApplicationState = globalApplicationState
 
     this.continents = d3.group(globalApplicationState.covidData.filter(this.GetContinentData), el => el.location)
-    console.log(this.continents)
 
     this.chartSVG = d3.select('#line-chart')
 
-    const xAxisGroup = d3.select('#x-axis')
-      .attr('transform', `translate(${this.left}, ${this.height - this.bottom})`)
-
-    xAxisGroup.append('text')
-      .attr('transform', `translate(${(this.width - this.left) / 2}, 40)`)
-      .attr('fill', 'black')
-      .attr('text-anchor', 'middle')
-      .text('Date')
-
-    const yAxisGroup = d3.select('#y-axis')
-      .attr('transform', `translate(${this.left}, ${this.top})`)
-
-    yAxisGroup.append('text')
-      .attr('transform', `translate(-60, ${(this.height - this.bottom) / 2}) rotate(-90)`)
-      .attr('fill', 'black')
-      .attr('text-anchor', 'middle')
-      .text('Cases per million')
-
-    const earliestDate = this.EarliestDate(this.continents)
-    const greatestDate = this.GreatestDate(this.continents)
-
-    this.xScale = d3.scaleTime()
-      .domain([earliestDate, greatestDate])
-      .range([0, this.width])
-      .nice()
-
-    this.xAxis.scale(this.xScale)
-
-    xAxisGroup.transition()
-      .call(this.xAxis)
-
-
-    const maxY = this.GreatestValue(this.continents)
-
-    this.yScale = d3.scaleLinear()
-      .domain([0, maxY])
-      .range([this.height - this.bottom - this.top, 0]) // invert axis
-      .nice()
-
-    this.yAxis.scale(this.yScale)
-
-    yAxisGroup.transition()
-      .call(this.yAxis)
-
-    const lineGen = d3.line()
-      .x(el => this.left + this.xScale(new Date(el.date)))
-      .y(el => this.yScale(el.total_cases_per_million) + this.top)
-
-    const content = this.chartSVG.select('#lines')
-
-    content.selectAll('path')
-      .data(this.continents) // create a one object array to activate the join
-      .join(
-        (enter) => {
-          return enter.append('path')
-            .classed('line-chart', true)
-            .datum(el => el[1])
-            .attr('d', lineGen)
-            .attr('fill', 'none')
-            .attr('stroke', 'black')
-            .attr('opacity', 0)
-            .transition()
-            .duration(this.animationDuration)
-            .attr('opacity', 1)
-        },
-        (update) => {
-          return update.datum(el => el[1])
-            .transition()
-            .duration(this.animationDuration)
-            .attr('d', lineGen)
-        },
-        (exit) => {
-          return exit.transition()
-            .duration(this.animationDuration)
-            .attr('opacity', 0)
-            .remove()
-        }
-      )
-
+    this.SetupAxes()
+    this.updateSelectedCountries()
   }
 
   GreatestValue = (group) => {
@@ -159,7 +81,106 @@ class LineChart {
 
   GetContinentData = el => el.iso_code.startsWith('OWID')
 
-  updateSelectedCountries() {
+  SetupAxes = () => {
+    this.xAxisGroup = d3.select('#x-axis')
+      .attr('transform', `translate(${this.left}, ${this.height - this.bottom})`)
 
+    this.xAxisGroup.append('text')
+      .attr('transform', `translate(${(this.width - this.left) / 2}, 40)`)
+      .attr('fill', 'black')
+      .attr('text-anchor', 'middle')
+      .text('Date')
+
+    this.yAxisGroup = d3.select('#y-axis')
+      .attr('transform', `translate(${this.left}, ${this.top})`)
+
+    this.yAxisGroup.append('text')
+      .attr('transform', `translate(-60, ${(this.height - this.bottom) / 2}) rotate(-90)`)
+      .attr('fill', 'black')
+      .attr('text-anchor', 'middle')
+      .text('Cases per million')
+  }
+
+  RenderAxes = (data) => {
+    const earliestDate = this.EarliestDate(data)
+    const greatestDate = this.GreatestDate(data)
+
+    this.xScale = d3.scaleTime()
+      .domain([earliestDate, greatestDate])
+      .range([0, this.width])
+      .nice()
+
+    this.xAxis.scale(this.xScale)
+
+    this.xAxisGroup.transition()
+      .duration(this.animationDuration)
+      .call(this.xAxis)
+
+    const maxY = this.GreatestValue(data)
+
+    this.yScale = d3.scaleLinear()
+      .domain([0, maxY])
+      .range([this.height - this.bottom - this.top, 0]) // invert axis
+      .nice()
+
+    this.yAxis.scale(this.yScale)
+
+    this.yAxisGroup.transition()
+      .duration(this.animationDuration)
+      .call(this.yAxis)
+  }
+
+  RenderLines = (data) => {
+    const lineGen = d3.line()
+      .x(el => this.left + this.xScale(new Date(el.date)))
+      .y(el => this.yScale(el.total_cases_per_million) + this.top)
+
+    const content = this.chartSVG.select('#lines')
+
+    content.selectAll('path')
+      .data(data) // create a one object array to activate the join
+      .join(
+        (enter) => {
+          return enter.append('path')
+            .classed('line-chart', true)
+            .datum(el => el[1])
+            .attr('d', lineGen)
+            .attr('fill', 'none')
+            .attr('stroke', 'black')
+            .attr('opacity', 0)
+            .transition()
+            .duration(this.animationDuration)
+            .attr('opacity', 1)
+        },
+        (update) => {
+          return update.datum(el => el[1])
+            .transition()
+            .duration(this.animationDuration)
+            .attr('d', lineGen)
+        },
+        (exit) => {
+          return exit.transition()
+            .duration(this.animationDuration)
+            .attr('opacity', 0)
+            .remove()
+        }
+      )
+  }
+
+  updateSelectedCountries() {
+    const sel = this.globalApplicationState.selectedLocations
+    const worldMap = this.globalApplicationState.worldMap
+    if (sel.length > 0) {
+      const selData = []
+      // Update charts with selection
+      sel.forEach((el) => {
+        selData.push([el, worldMap.CasesForCountry(el)])
+      })
+      this.RenderAxes(selData)
+      this.RenderLines(selData)
+    } else {
+      this.RenderAxes(this.continents)
+      this.RenderLines(this.continents)
+    }
   }
 }
