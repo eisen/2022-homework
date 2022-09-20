@@ -8,6 +8,7 @@ class LineChart {
   height = 500
 
   left = 80
+  top = 10
   bottom = 50
 
   startDate = 0
@@ -34,13 +35,11 @@ class LineChart {
     const xAxis = d3.select('#x-axis')
       .attr('transform', `translate(${this.left}, ${this.height - this.bottom})`)
 
-    d3.select('#y-axis')
-      .attr('transform', `translate(${this.left}, 0)`)
+    const yAxis = d3.select('#y-axis')
+      .attr('transform', `translate(${this.left}, ${this.top})`)
 
     const earliestDate = this.EarliestDate(this.continents)
     const greatestDate = this.GreatestDate(this.continents)
-
-    console.log(earliestDate, greatestDate)
 
     const xScale = d3.scaleTime()
       .domain([earliestDate, greatestDate])
@@ -52,6 +51,32 @@ class LineChart {
     xAxis.transition()
         .call(this.xAxis)
 
+
+    const maxY = this.GreatestValue(this.continents)
+
+    const yScale = d3.scaleLinear()
+      .domain([0, maxY])
+      .range([this.height - this.bottom - this.top, 0]) // invert axis
+      .nice()
+
+    this.yAxis.scale(yScale)
+
+    yAxis.transition()
+        .call(this.yAxis)
+
+  }
+
+  GreatestValue = (group) => {
+    let greatestValue = d3.greatest(group, ([cases, value]) => {
+      const greatest = d3.greatest(d3.group(value, el => el.total_cases_per_million), ([icases, ]) => {
+        return parseFloat(icases)
+      })
+      return parseFloat(greatest[0])
+    })
+
+    return parseFloat(greatestValue[1].reduce( (prev, next) => {
+      return parseFloat(prev.total_cases_per_million) > parseFloat(next.total_cases_per_million) ? prev : next
+    }, greatestValue[0]).total_cases_per_million)
   }
 
   EarliestDate = (group) => {
