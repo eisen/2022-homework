@@ -168,14 +168,17 @@ class LineChart {
     const day = date.toLocaleString("default", { day: "2-digit" })
 
     names.forEach(el => {
-      const cases = this.selData.get(el).filter(el => {
+      const data = this.selData.get(el).filter(el => {
         return el.date === `${year}-${month}-${day}`
-      })[0].total_cases_per_million
+      })[0]
 
-      labels.push({
-        location: el,
-        cases: parseFloat(cases)
-      })
+      if (data) {
+        const cases = parseFloat(data.total_cases_per_million)
+        labels.push({
+          location: el,
+          cases: cases
+        })
+      }
     })
 
     labels.sort((a, b) => b.cases - a.cases) // Descending sort
@@ -202,9 +205,9 @@ class LineChart {
         },
         (exit) => {
           exit.transition()
-          .duration(this.animationDuration)
-          .attr('opacity', 0)
-          .remove()
+            .duration(this.animationDuration)
+            .attr('opacity', 0)
+            .remove()
         }
       )
 
