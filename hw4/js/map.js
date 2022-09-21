@@ -3,7 +3,6 @@ class MapVis {
   svg = null
   totalCases = 0
   colorScale = null
-  sel = null
 
   width = 800
   height = 500
@@ -20,7 +19,7 @@ class MapVis {
      */
   constructor(globalApplicationState) {
     this.globalApplicationState = globalApplicationState
-    this.sel = this.globalApplicationState.selectedLocations
+     const sel = this.globalApplicationState.selectedLocations
 
     this.svg = d3.select('#map')
 
@@ -138,7 +137,16 @@ class MapVis {
             .on('mouseout', this.OnMouseOut)
             .on('click', el => this.updateSelectedCountries(el))
         },
-        (update) => { },
+        (update) => { 
+          update.attr('d', path)
+          .attr('cursor', 'pointer')
+          .attr('fill', this.GetCountryFill)
+          .attr('id', el => el.id)
+          .attr('stroke', 'lightgray')
+          .on('mouseover', this.OnMouseOver)
+          .on('mouseout', this.OnMouseOut)
+          .on('click', el => this.updateSelectedCountries(el))
+        },
         (exit) => { }
       )
   }
@@ -153,8 +161,9 @@ class MapVis {
   }
 
   OnMouseOver = el => {
+    const sel = this.globalApplicationState.selectedLocations
     const id = d3.select(el.target).attr('id')
-    if (this.sel.includes(id) === false) {
+    if (sel.includes(id) === false) {
       d3.select(el.target)
         .attr('stroke', 'gray')
         .raise()
@@ -162,8 +171,9 @@ class MapVis {
   }
 
   OnMouseOut = el => {
+    const sel = this.globalApplicationState.selectedLocations
     const id = d3.select(el.target).attr('id')
-    if (this.sel.includes(id) === false) {
+    if (sel.includes(id) === false) {
       d3.select(el.target)
         .attr('stroke', 'lightgray')
         .lower()
@@ -171,20 +181,26 @@ class MapVis {
   }
 
   ToggleCountry = (el, id) => {
-    if (this.sel.includes(id)) {
+    const sel = this.globalApplicationState.selectedLocations
+    if (sel.includes(id)) {
       d3.select(el.target).attr('stroke', 'lightgray').lower()
-      const idx = this.sel.findIndex(el => el === id)
-      this.sel.splice(idx, 1) // Remove it
+      const idx = sel.findIndex(el => el === id)
+      sel.splice(idx, 1) // Remove it
     } else {
       d3.select(el.target).attr('stroke', 'black').raise()
-      this.sel.push(id) // Add it
+      sel.push(id) // Add it
     }
   }
 
   ClearCountries = () => {
-    this.sel.forEach((id) => {
+    const sel = this.globalApplicationState.selectedLocations
+    sel.forEach((id) => {
       const el = d3.select(`#${id}`)
-        .attr('stroke', 'lightgray').lower()
+        .attr('stroke', 'lightgray')
+        .lower()
+        .on('mouseover', this.OnMouseOver)
+        .on('mouseout', this.OnMouseOut)
+        .on('click', el => this.updateSelectedCountries(el))
     })
     this.globalApplicationState.selectedLocations = []
   }

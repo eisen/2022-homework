@@ -239,7 +239,7 @@ class LineChart {
       .y(el => this.yScale(el.total_cases_per_million) + this.top)
 
     this.content.selectAll('path')
-      .data(data) // create a one object array to activate the join
+      .data(data)
       .join(
         (enter) => {
           return enter.append('path')
