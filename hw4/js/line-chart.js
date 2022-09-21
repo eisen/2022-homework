@@ -5,6 +5,7 @@ class LineChart {
   selData = null
   chartSVG = null
   content = null
+  colors = null
 
   width = 700
   height = 500
@@ -51,6 +52,7 @@ class LineChart {
         this.UpdateOverlay(el)
       })
 
+    this.SetupColors(Array.from(this.continents, ([key,]) => key))
     this.SetupAxes()
     this.updateSelectedCountries()
   }
@@ -97,6 +99,15 @@ class LineChart {
   GetContinentData = el => el.iso_code.startsWith('OWID')
 
   GetCountrytData = el => el.iso_code.startsWith('OWID') === false
+
+  SetupColors = (domain) => {
+    const sortedDomain = domain.sort( (a, b) => a - b)
+    const gap = 360 / domain.length
+    const colorRange = sortedDomain.map((el, idx) => d3.hsl(idx * gap, 0.5, 0.5).toString())
+    this.colors = d3.scaleOrdinal()
+      .domain(sortedDomain)
+      .range(colorRange)
+  }
 
   SetupAxes = () => {
     this.xAxisGroup = d3.select('#x-axis')
@@ -147,6 +158,12 @@ class LineChart {
       .call(this.yAxis)
   }
 
+  CountryLabel = (el, x) => {
+    const text_format = d3.formatPrefix(' 5,.1', 1e3)
+    const countryCases = text_format(el.cases)
+    return this.OnLeftSide(x) ? `${countryCases} - ${el.location}` : `${el.location} - ${countryCases}`
+  }
+
   OnLeftSide = (x) => x - this.left < (this.width - this.left - this.right) * 0.5
     ? true : false
 
@@ -183,24 +200,27 @@ class LineChart {
 
     labels.sort((a, b) => b.cases - a.cases) // Descending sort
 
-    const text_format = d3.formatPrefix(',.1', 1e3)
     d3.select('#overlay')
       .selectAll('text')
       .data(labels)
       .join(
         (enter) => {
           enter.append('text')
-            .text(el => `${el.location}, ${text_format(el.cases)}`)
+            .text(el => this.CountryLabel(el, x))
             .attr('x', this.OnLeftSide(x) ? x + 10 : x - 10)
             .attr('y', (el, idx) => this.top + idx * 20 + 10)
             .attr('text-anchor', this.OnLeftSide(x) ? 'start' : 'end')
-            .attr('fill', 'black')
+            .attr('fill', el => this.colors(el.location))
+            .attr('opacity', 0)
+            .transition()
+            .duration(this.animationDuration)
             .attr('opacity', 1)
         },
         (update) => {
-          update.text(el => `${el.location}, ${text_format(el.cases)}`)
+          update.text(el => this.CountryLabel(el, x))
             .attr('x', this.OnLeftSide(x) ? x + 10 : x - 10)
             .attr('y', (el, idx) => this.top + idx * 20 + 10)
+            .attr('fill', el => this.colors(el.location))
             .attr('text-anchor', this.OnLeftSide(x) ? 'start' : 'end')
         },
         (exit) => {
@@ -227,7 +247,7 @@ class LineChart {
             .datum(el => el[1])
             .attr('d', lineGen)
             .attr('fill', 'none')
-            .attr('stroke', 'black')
+            .attr('stroke', el => this.colors(el[0].location))
             .attr('opacity', 0)
             .transition()
             .duration(this.animationDuration)
@@ -238,6 +258,7 @@ class LineChart {
             .transition()
             .duration(this.animationDuration)
             .attr('d', lineGen)
+            .attr('stroke', el => this.colors(el[0].location))
         },
         (exit) => {
           return exit.transition()
@@ -261,6 +282,7 @@ class LineChart {
     } else {
       this.selData = this.continents
     }
+    this.SetupColors(Array.from(this.selData, ([key,]) => key))
     this.RenderAxes(this.selData)
     this.RenderLines(this.selData)
   }
