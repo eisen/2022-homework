@@ -2,12 +2,14 @@
 class LineChart {
 
   continents = null
+  selData = null
   chartSVG = null
 
   width = 700
   height = 500
 
   left = 80
+  right = 30
   top = 10
   bottom = 50
 
@@ -107,7 +109,7 @@ class LineChart {
 
     this.xScale = d3.scaleTime()
       .domain([earliestDate, greatestDate])
-      .range([0, this.width])
+      .range([0, this.width - this.left - this.right])
       .nice()
 
     this.xAxis.scale(this.xScale)
@@ -130,12 +132,37 @@ class LineChart {
       .call(this.yAxis)
   }
 
+  LeftSide = (x) => x - this.left < (this.width - this.left - this.right) * 0.5
+  ? true : false
+
+  UpdateOverlay = (el) => {
+      const x = el.offsetX
+      const overlay = d3.select('#overlay line')
+      .attr('stroke', 'black')
+      .attr('y1', 0)
+      .attr('y2', this.height - this.bottom)
+      .attr('x1', x)
+      .attr('x2', x)
+
+      const date = this.xScale.invert(x - this.left)
+  }
+
   RenderLines = (data) => {
     const lineGen = d3.line()
-      .x(el => this.left + this.xScale(new Date(el.date)))
+      .x(el => this.xScale(new Date(el.date)) + this.left)
       .y(el => this.yScale(el.total_cases_per_million) + this.top)
 
     const content = this.chartSVG.select('#lines')
+
+    content.append('rect')
+    .attr('x', this.left)
+    .attr('y', this.top)
+    .attr('width', this.width - this.left - this.right)
+    .attr('height', this.height - this.top - this.bottom)
+    .attr('fill', 'white')
+    .on('mousemove', (el) => {
+      this.UpdateOverlay(el)
+    })
 
     content.selectAll('path')
       .data(data) // create a one object array to activate the join
@@ -171,13 +198,13 @@ class LineChart {
     const sel = this.globalApplicationState.selectedLocations
     const worldMap = this.globalApplicationState.worldMap
     if (sel.length > 0) {
-      const selData = []
+      this.selData = []
       // Update charts with selection
       sel.forEach((el) => {
         selData.push([el, worldMap.CasesForCountry(el)])
       })
-      this.RenderAxes(selData)
-      this.RenderLines(selData)
+      this.RenderAxes(this.selData)
+      this.RenderLines(this.selData)
     } else {
       this.RenderAxes(this.continents)
       this.RenderLines(this.continents)
