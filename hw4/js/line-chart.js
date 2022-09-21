@@ -42,6 +42,7 @@ class LineChart {
 
     this.content = this.chartSVG.select('#lines')
 
+    // Append rect to the back of the lines group for trigger during mouseover events
     this.content.append('rect')
       .attr('x', this.left)
       .attr('y', this.top)
@@ -100,8 +101,9 @@ class LineChart {
 
   GetCountrytData = el => el.iso_code.startsWith('OWID') === false
 
+  // Setup color scale for lines and country lalebs
   SetupColors = (domain) => {
-    const sortedDomain = domain.sort( (a, b) => a - b)
+    const sortedDomain = domain.sort((a, b) => a - b)
     const gap = 360 / domain.length
     const colorRange = sortedDomain.map((el, idx) => d3.hsl(idx * gap, 0.5, 0.5).toString())
     this.colors = d3.scaleOrdinal()
@@ -169,6 +171,8 @@ class LineChart {
 
   UpdateOverlay = (el) => {
     const x = el.offsetX
+
+    // Render cursor line
     d3.select('#overlay line')
       .attr('stroke', 'black')
       .attr('y1', 0)
@@ -176,19 +180,24 @@ class LineChart {
       .attr('x1', x)
       .attr('x2', x)
 
+    // Get location names
     const names = Array.from(this.selData, ([key,]) => key)
+    // Convert mouse x position to date
     const date = this.xScale.invert(x - this.left)
     const labels = []
 
+    // Generate date components for comparison
     const year = date.toLocaleString("default", { year: "numeric" })
     const month = date.toLocaleString("default", { month: "2-digit" })
     const day = date.toLocaleString("default", { day: "2-digit" })
 
+    // Find cases for the given date for each group in the dataset
     names.forEach(el => {
       const data = this.selData.get(el).filter(el => {
         return el.date === `${year}-${month}-${day}`
       })[0]
 
+      // If group has data for the given date, add it to the labels
       if (data) {
         const cases = parseFloat(data.total_cases_per_million)
         labels.push({
@@ -200,6 +209,7 @@ class LineChart {
 
     labels.sort((a, b) => b.cases - a.cases) // Descending sort
 
+    // Render country labels
     d3.select('#overlay')
       .selectAll('text')
       .data(labels)
@@ -234,10 +244,12 @@ class LineChart {
   }
 
   RenderLines = (data) => {
+    // Align positions inside the content area
     const lineGen = d3.line()
       .x(el => this.xScale(new Date(el.date)) + this.left)
       .y(el => this.yScale(el.total_cases_per_million) + this.top)
 
+    // Render line per group set
     this.content.selectAll('path')
       .data(data)
       .join(
@@ -276,10 +288,10 @@ class LineChart {
     d3.selectAll('#overlay text').remove()
     d3.select('#overlay line').attr('x1', this.left).attr('x2', this.left)
 
-    if (sel.length > 0) {
+    if (sel.length > 0) { // If countries selected, find their data
       this.selData = d3.group(this.globalApplicationState.covidData.filter(this.GetCountrytData)
         .filter(el => sel.includes(el.iso_code)), el => el.location)
-    } else {
+    } else { // Otherwise plot continents data
       this.selData = this.continents
     }
     this.SetupColors(Array.from(this.selData, ([key,]) => key))

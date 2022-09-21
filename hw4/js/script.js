@@ -25,12 +25,13 @@
     // console.log('Here is the imported data:', loadedData.covidData)
 
     // Store the loaded data into the globalApplicationState
+    // Remove data with empty total_cases_per_million field
     globalApplicationState.covidData = loadedData.covidData.filter( el => el.total_cases_per_million !== '')
 
     globalApplicationState.mapData = 
       topojson.feature(loadedData.mapData, loadedData.mapData.objects.countries)
     
-    // Remove data with invalid iso codes
+    // Remove data with invalid iso codes (-99)
     globalApplicationState.mapData.features = globalApplicationState.mapData.features.filter( feature => feature.id !== '-99' ) 
 
     // Creates the view objects with the global state passed in 

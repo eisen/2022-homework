@@ -23,14 +23,17 @@ class MapVis {
 
     this.svg = d3.select('#map')
 
+    // Add click handler for clearing countries
     d3.select('#clear-button').on('click', () => this.updateSelectedCountries())
 
+    // Find maximum number of cases
     const startValue = this.globalApplicationState.covidData[0]
     this.totalCases = this.globalApplicationState.covidData
       .reduce(this.MaxVal, startValue).total_cases_per_million
 
     this.CreateLegend()
 
+    // Create colorScale for country coding
     this.colorScale = d3.scaleLinear()
       .domain([0, this.totalCases / 2, this.totalCases])
       .range(['#fff5f0', '#f96c4f', '#68010d'])
@@ -49,15 +52,18 @@ class MapVis {
   }
 
   CreateLegend = () => {
+    // Set legand location
     const legend = this.svg
       .append('g')
       .classed('legend', true)
       .attr('transform', `translate(0, ${this.height - this.legend_height})`)
 
+    // Add start point for legend
     legend.append('text')
       .text('0')
       .attr('y', -5)
 
+    // Add end point for legend
     const text_format = d3.formatPrefix(',.0', 1e3)
     legend.append('text')
       .text(text_format(this.totalCases))
@@ -65,6 +71,7 @@ class MapVis {
       .attr('y', -5)
       .attr('text-anchor', 'end')
 
+    // Fill legend with gradient
     legend.append('rect')
       .attr('rx', 7)
       .attr('ry', 7)
