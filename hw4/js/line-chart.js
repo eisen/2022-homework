@@ -22,7 +22,7 @@ class LineChart {
   yAxis = d3.axisLeft()
   yScale = null
 
-  animationDuration = 1000
+  animationDuration = 300
 
   /**
    * Creates a LineChart

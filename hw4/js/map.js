@@ -24,6 +24,8 @@ class MapVis {
 
     this.svg = d3.select('#map')
 
+    d3.select('#clear-button').on('click', () => this.updateSelectedCountries())
+
     const startValue = this.globalApplicationState.covidData[0]
     this.totalCases = this.globalApplicationState.covidData
       .reduce(this.MaxVal, startValue).total_cases_per_million
@@ -130,7 +132,7 @@ class MapVis {
             .attr('d', path)
             .attr('cursor', 'pointer')
             .attr('fill', this.GetCountryFill)
-            .attr('title', el => el.id)
+            .attr('id', el => el.id)
             .attr('stroke', 'lightgray')
             .on('mouseover', this.OnMouseOver)
             .on('mouseout', this.OnMouseOut)
@@ -151,7 +153,7 @@ class MapVis {
   }
 
   OnMouseOver = el => {
-    const id = d3.select(el.target).attr('title')
+    const id = d3.select(el.target).attr('id')
     if (this.sel.includes(id) === false) {
       d3.select(el.target)
         .attr('stroke', 'gray')
@@ -160,7 +162,7 @@ class MapVis {
   }
 
   OnMouseOut = el => {
-    const id = d3.select(el.target).attr('title')
+    const id = d3.select(el.target).attr('id')
     if (this.sel.includes(id) === false) {
       d3.select(el.target)
         .attr('stroke', 'lightgray')
@@ -168,9 +170,7 @@ class MapVis {
     }
   }
 
-  updateSelectedCountries(el) {
-    const id = d3.select(el.target).attr('title')
-
+  ToggleCountry = (el, id) => {
     if (this.sel.includes(id)) {
       d3.select(el.target).attr('stroke', 'lightgray').lower()
       const idx = this.sel.findIndex(el => el === id)
@@ -179,7 +179,23 @@ class MapVis {
       d3.select(el.target).attr('stroke', 'black').raise()
       this.sel.push(id) // Add it
     }
+  }
 
+  ClearCountries = () => {
+    this.sel.forEach((id) => {
+      const el = d3.select(`#${id}`)
+        .attr('stroke', 'lightgray').lower()
+    })
+    this.globalApplicationState.selectedLocations = []
+  }
+
+  updateSelectedCountries(el) {
+    if (el) {
+      const id = d3.select(el.target).attr('id')
+      this.ToggleCountry(el, id)
+    } else {
+      this.ClearCountries()
+    }
     this.globalApplicationState.lineChart.updateSelectedCountries()
   }
 }
