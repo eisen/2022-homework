@@ -26,13 +26,18 @@
 
     // Store the loaded data into the globalApplicationState
     // Remove data with empty total_cases_per_million field
-    globalApplicationState.covidData = loadedData.covidData.filter( el => el.total_cases_per_million !== '')
+    globalApplicationState.covidData = loadedData.covidData.map(el => {
+      if (el.total_cases_per_million === '') {
+        el.total_cases_per_million = 0
+      }
+      return el
+    })
 
-    globalApplicationState.mapData = 
+    globalApplicationState.mapData =
       topojson.feature(loadedData.mapData, loadedData.mapData.objects.countries)
-    
+
     // Remove data with invalid iso codes (-99)
-    globalApplicationState.mapData.features = globalApplicationState.mapData.features.filter( feature => feature.id !== '-99' ) 
+    globalApplicationState.mapData.features = globalApplicationState.mapData.features.filter(feature => feature.id !== '-99')
 
     // Creates the view objects with the global state passed in 
     const worldMap = new MapVis(globalApplicationState)
