@@ -36,6 +36,31 @@ class Table {
         this.vizHeight = 30
         this.smallVizHeight = 20
 
+        this.labels = [{
+            value: '+75',
+            party: 'trump'
+        }, {
+            value: '+50',
+            party: 'trump'
+        }, {
+            value: '+25',
+            party: 'trump'
+        }, {
+            value: '0',
+            party: 'neutral'
+        }, {
+            value: '+25',
+            party: 'biden'
+        }, {
+            value: '+50',
+            party: 'biden'
+        }, {
+            value: '+75',
+            party: 'biden'
+        }]
+
+        this.labelGap = this.vizWidth / 7.0
+
         this.scaleX = d3.scaleLinear()
             .domain([-100, 100])
             .range([0, this.vizWidth])
@@ -51,7 +76,18 @@ class Table {
         /**
          * Draw the legend for the bar chart.
          */
-
+        d3.select('#marginAxis')
+            .attr('width', this.vizWidth)
+            .attr('height', this.vizHeight)
+            .selectAll('text')
+            .data(this.labels)
+            .join('text')
+            .text(d => d.value)
+            .attr('text-anchor', 'middle')
+            .attr('width', this.labelGap)
+            .attr('x', (d, i) => (i + 0.5) * this.labelGap)
+            .attr('y', this.vizHeight - 10)
+            .attr('class', d => d.party)
 
     }
 

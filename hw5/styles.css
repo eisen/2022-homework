@@ -63,6 +63,10 @@ td:last-of-type
     fill: steelblue;
 }
 
+.neutral {
+    opacity: 0;
+}
+
 td {
     padding-top: 0px;
     padding-bottom: 0px;
