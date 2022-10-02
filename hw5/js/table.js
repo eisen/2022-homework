@@ -36,30 +36,7 @@ class Table {
         this.vizHeight = 30
         this.smallVizHeight = 20
 
-        this.labels = [{
-            value: '+75',
-            party: 'biden'
-        }, {
-            value: '+50',
-            party: 'biden'
-        }, {
-            value: '+25',
-            party: 'biden'
-        }, {
-            value: '0',
-            party: 'neutral'
-        }, {
-            value: '+25',
-            party: 'trump'
-        }, {
-            value: '+50',
-            party: 'trump'
-        }, {
-            value: '+75',
-            party: 'trump'
-        }]
-
-        this.labelGap = this.vizWidth / 7.0
+        this.labels = [-75, -50, -25, 0, 25, 50, 75]
 
         this.scaleX = d3.scaleLinear()
             .domain([-100, 100])
@@ -82,12 +59,28 @@ class Table {
             .selectAll('text')
             .data(this.labels)
             .join('text')
-            .text(d => d.value)
+            .text(d => {
+                if (d > 0) {
+                    return `+${d}`
+                } else if (d < 0) {
+                    return d
+                } else {
+                    return ''
+                }
+            })
             .attr('text-anchor', 'middle')
-            .attr('width', this.labelGap)
-            .attr('x', (d, i) => (i + 0.5) * this.labelGap)
+            .attr('x', d => this.scaleX(d))
             .attr('y', this.vizHeight - 10)
-            .attr('class', d => d.party)
+            .attr('class', d => d < 0 ? 'biden' : 'trump')
+
+        d3.select('#marginAxis')
+            .append('line')
+            .attr('x1', this.scaleX(0))
+            .attr('x2', this.scaleX(0))
+            .attr('y1', 0)
+            .attr('y2', this.vizHeight)
+            .attr('stroke', 'black')
+            .attr('stroke-width', 2)
     }
 
     drawTable() {
@@ -132,7 +125,7 @@ class Table {
             .data(d => [d, d, d])
             .join('g')
 
-        this.addGridlines(grouperSelect.filter((d, i) => i === 0), [-75, -50, -25, 0, 25, 50, 75])
+        this.addGridlines(grouperSelect.filter((d, i) => i === 0), this.labels)
         this.addRectangles(grouperSelect.filter((d, i) => i === 1))
         this.addCircles(grouperSelect.filter((d, i) => i === 2))
     }
@@ -213,11 +206,11 @@ class Table {
         containerSelect.selectAll('line')
             .data(ticks)
             .join('line')
-            .attr('transform', (d, i) => `translate(${(i + 0.5) * this.labelGap}, 0)`)
-            .attr('x0', 0)
-            .attr('x0', 0)
-            .attr('y0', 0)
-            .attr('y1', this.vizHeight)
+            .attr('transform', d => `translate(${this.scaleX(d)}, 0)`)
+            .attr('x1', 0)
+            .attr('x2', 0)
+            .attr('y1', 0)
+            .attr('y2', this.vizHeight)
             .attr('stroke', d => d === 0 ? 'black' : 'lightgray')
             .attr('stroke-width', d => d === 0 ? 2 : 1)
     }
@@ -250,6 +243,8 @@ class Table {
 
                         return [biden, trump]
                     }
+                } else {
+                    return [] // Poll data, do not draw a rectangle
                 }
             })
             .join('rect')
@@ -271,12 +266,18 @@ class Table {
          * add circles to the vizualizations
          */
         containerSelect.selectAll('circle')
-            .data(d => [d.value])
+            .data(d => [d])
             .join('circle')
-            .attr('cx', d => this.scaleX(d.margin))
+            .attr('cx', d => this.scaleX(d.value.margin))
             .attr('cy', this.vizHeight * 0.5)
-            .attr('r', 6)
-            .attr('class', d => d.margin <= 0 ? 'biden' : 'trump')
+            .attr('r', d => {
+                if (d.isForecast === true) {
+                    return 6
+                } else {
+                    return 3
+                }
+            })
+            .attr('class', d => d.value.margin <= 0 ? 'biden' : 'trump')
             .attr('opacity', 0.75)
     }
 
@@ -288,29 +289,32 @@ class Table {
          * Attach click handlers to all the th elements inside the columnHeaders row.
          * The handler should sort based on that column and alternate between ascending/descending.
          */
-        d3.select('#columnHeaders')
+        const ths = d3.select('#columnHeaders')
             .selectAll('th')
-            .on('click', el => {
-                const sortBy = d3.select(el.target).attr('id')
-                const headerState = this.headerData.filter(el => el.key === sortBy)[0]
+            .data(this.headerData)
+            .join('th')
 
-                this.collapseAll()
+        ths.on('click', (el, d) => {
+            const sortBy = d.key
+            const headerState = this.headerData.filter(el => el.key === sortBy)[0]
 
-                this.headerData.forEach(el => {
-                    if (el.key !== sortBy) {
-                        el.sorted = false
-                    }
-                })
+            this.collapseAll()
 
-                if (headerState.sorted) {
-                    headerState.ascending = !headerState.ascending
-                } else {
-                    headerState.sorted = true
+            this.headerData.forEach(el => {
+                if (el.key !== sortBy) {
+                    el.sorted = false
                 }
-
-                this.tableData.sort((a, b) => headerState.ascending ? d3.ascending(a[sortBy], b[sortBy]) : d3.descending(a[sortBy], b[sortBy]))
-                this.drawTable()
             })
+
+            if (headerState.sorted) {
+                headerState.ascending = !headerState.ascending
+            } else {
+                headerState.sorted = true
+            }
+
+            this.tableData.sort((a, b) => headerState.ascending ? d3.ascending(a[sortBy], b[sortBy]) : d3.descending(a[sortBy], b[sortBy]))
+            this.drawTable()
+        })
     }
 
     toggleRow(rowData, index) {
@@ -320,10 +324,22 @@ class Table {
         /**
          * Update table data with the poll data and redraw the table.
          */
-
+        const poll_data = this.pollData.get(rowData.state)
+        if (poll_data) {
+            poll_data.sort((a, b) => a.name.localeCompare(b.name))
+            if (rowData.isExpanded) { // Remove state poll data
+                rowData.isExpanded = false
+                this.tableData.splice(index + 1, poll_data.length)
+            } else { // Add state poll data
+                rowData.isExpanded = true
+                this.tableData.splice(index + 1, 0, ...poll_data)
+            }
+            this.drawTable()
+        }
     }
 
     collapseAll() {
         this.tableData = this.tableData.filter(d => d.isForecast)
+        this.tableData.map(d => d.isExpanded = false)
     }
 }
