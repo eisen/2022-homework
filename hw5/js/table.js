@@ -224,22 +224,21 @@ class Table {
          */
         containerSelect.selectAll('rect')
             .data(d => {
-                if(d.value.marginHigh <= 0)
-                {
-                    d.value.class='biden'
+                if (d.value.marginHigh <= 0) {
+                    d.value.class = 'biden'
                     return [d.value]
-                } else if(d.value.marginLow >= 0) {
-                    d.value.class='trump'
+                } else if (d.value.marginLow >= 0) {
+                    d.value.class = 'trump'
                     return [d.value]
                 } else {
-                    const biden = {...d.value}
-                    const trump = {...d.value}
+                    const biden = { ...d.value }
+                    const trump = { ...d.value }
 
                     biden.marginHigh = 0
                     biden.class = 'biden'
 
                     trump.marginLow = 0
-                    trump.class='trump'
+                    trump.class = 'trump'
 
                     return [biden, trump]
                 }
@@ -253,7 +252,6 @@ class Table {
             .attr('stroke', 'none')
             .attr('opacity', 0.5)
             .attr('class', d => d.class)
-
     }
 
     addCircles(containerSelect) {
@@ -263,8 +261,14 @@ class Table {
         /**
          * add circles to the vizualizations
          */
-
-
+        containerSelect.selectAll('circle')
+            .data(d => [d.value])
+            .join('circle')
+            .attr('cx', d => this.scaleX(d.margin))
+            .attr('cy', 15)
+            .attr('r', 6)
+            .attr('class', d => d.margin <= 0 ? 'biden' : 'trump')
+            .attr('opacity', 0.75)
     }
 
     attachSortHandlers() {
