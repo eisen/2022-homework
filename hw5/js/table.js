@@ -313,6 +313,12 @@ class Table {
             }
 
             this.tableData.sort((a, b) => headerState.ascending ? d3.ascending(a[sortBy], b[sortBy]) : d3.descending(a[sortBy], b[sortBy]))
+            this.tableData.map( (el, idx) => {
+                if(el.isExpanded === true) {
+                    el.isExpanded = false
+                    this.toggleRow(el, idx)
+                }
+            })
             this.drawTable()
         })
     }
@@ -326,7 +332,13 @@ class Table {
          */
         const poll_data = this.pollData.get(rowData.state)
         if (poll_data) {
-            poll_data.sort((a, b) => a.name.localeCompare(b.name))
+            const sortHeader = this.headerData.filter( el => el.sorted === true)
+
+            if(sortHeader.length > 0) {
+                const sortBy = sortHeader[0].key === 'state' ? 'name' : 'margin'                
+                poll_data.sort((a, b) => sortHeader[0].ascending ? d3.ascending(a[sortBy], b[sortBy]) : d3.descending(a[sortBy], b[sortBy]))
+            }
+
             if (rowData.isExpanded) { // Remove state poll data
                 rowData.isExpanded = false
                 this.tableData.splice(index + 1, poll_data.length)
@@ -334,12 +346,12 @@ class Table {
                 rowData.isExpanded = true
                 this.tableData.splice(index + 1, 0, ...poll_data)
             }
+
             this.drawTable()
         }
     }
 
     collapseAll() {
         this.tableData = this.tableData.filter(d => d.isForecast)
-        this.tableData.map(d => d.isExpanded = false)
     }
 }
