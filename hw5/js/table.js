@@ -108,8 +108,6 @@ class Table {
             .join('td')
             .attr('class', d => d.class)
 
-
-
         ////////////
         // PART 1 // 
         ////////////
@@ -191,7 +189,18 @@ class Table {
          * update the column headers based on the sort state
          */
 
-
+        d3.select('#columnHeaders')
+            .selectAll('th')
+            .data(this.headerData)
+            .classed('sorting', d => d.sorted)
+            .select('i')
+            .attr('class', d => {
+                if (d.sorted) {
+                    return d.ascending ? 'fas fa-sort-up' : 'fas fa-sort-down'
+                } else {
+                    return 'fas no-display'
+                }
+            })
     }
 
     addGridlines(containerSelect, ticks) {
@@ -222,23 +231,25 @@ class Table {
          */
         containerSelect.selectAll('rect')
             .data(d => {
-                if (d.value.marginHigh <= 0) {
-                    d.value.class = 'biden'
-                    return [d.value]
-                } else if (d.value.marginLow >= 0) {
-                    d.value.class = 'trump'
-                    return [d.value]
-                } else {
-                    const biden = { ...d.value }
-                    const trump = { ...d.value }
+                if (d.isForecast) {
+                    if (d.value.marginHigh <= 0) {
+                        d.value.class = 'biden'
+                        return [d.value]
+                    } else if (d.value.marginLow >= 0) {
+                        d.value.class = 'trump'
+                        return [d.value]
+                    } else {
+                        const biden = { ...d.value }
+                        const trump = { ...d.value }
 
-                    biden.marginHigh = 0
-                    biden.class = 'biden'
+                        biden.marginHigh = 0
+                        biden.class = 'biden'
 
-                    trump.marginLow = 0
-                    trump.class = 'trump'
+                        trump.marginLow = 0
+                        trump.class = 'trump'
 
-                    return [biden, trump]
+                        return [biden, trump]
+                    }
                 }
             })
             .join('rect')
@@ -283,18 +294,13 @@ class Table {
                 const sortBy = d3.select(el.target).attr('id')
                 const headerState = this.headerData.filter(el => el.key === sortBy)[0]
 
+                this.collapseAll()
+
                 this.headerData.forEach(el => {
                     if (el.key !== sortBy) {
-                        el.sorting = false
+                        el.sorted = false
                     }
                 })
-
-                d3.select('#columnHeaders')
-                    .selectAll('th')
-                    .classed('sorting', false)
-
-                d3.select(el.target)
-                    .classed('sorting', true)
 
                 if (headerState.sorted) {
                     headerState.ascending = !headerState.ascending
@@ -302,14 +308,10 @@ class Table {
                     headerState.sorted = true
                 }
 
-                this.tableData.sort((a,b) => headerState.ascending ? d3.ascending(a[sortBy], b[sortBy]) : d3.descending(a[sortBy], b[sortBy]) )
+                this.tableData.sort((a, b) => headerState.ascending ? d3.ascending(a[sortBy], b[sortBy]) : d3.descending(a[sortBy], b[sortBy]))
                 this.drawTable()
             })
-
     }
-
-
-
 
     toggleRow(rowData, index) {
         ////////////
@@ -324,5 +326,4 @@ class Table {
     collapseAll() {
         this.tableData = this.tableData.filter(d => d.isForecast)
     }
-
 }
