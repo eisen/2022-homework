@@ -202,6 +202,16 @@ class Table {
         /**
          * add gridlines to the vizualization
          */
+        containerSelect.selectAll('line')
+            .data(ticks)
+            .join('line')
+            .attr('transform', (d, i) => `translate(${(i + 0.5) * this.labelGap}, 0)`)
+            .attr('x0', 0)
+            .attr('x0', 0)
+            .attr('y0', 0)
+            .attr('y1', this.vizHeight)
+            .attr('stroke', d => d === 0 ? 'black' : 'lightgray')
+            .attr('stroke-width', d => d === 0 ? 2 : 1)
 
     }
 
