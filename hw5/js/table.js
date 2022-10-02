@@ -38,25 +38,25 @@ class Table {
 
         this.labels = [{
             value: '+75',
-            party: 'trump'
+            party: 'biden'
         }, {
             value: '+50',
-            party: 'trump'
+            party: 'biden'
         }, {
             value: '+25',
-            party: 'trump'
+            party: 'biden'
         }, {
             value: '0',
             party: 'neutral'
         }, {
             value: '+25',
-            party: 'biden'
+            party: 'trump'
         }, {
             value: '+50',
-            party: 'biden'
+            party: 'trump'
         }, {
             value: '+75',
-            party: 'biden'
+            party: 'trump'
         }]
 
         this.labelGap = this.vizWidth / 7.0
@@ -222,7 +222,37 @@ class Table {
         /**
          * add rectangles for the bar charts
          */
+        containerSelect.selectAll('rect')
+            .data(d => {
+                if(d.value.marginHigh <= 0)
+                {
+                    d.value.class='biden'
+                    return [d.value]
+                } else if(d.value.marginLow >= 0) {
+                    d.value.class='trump'
+                    return [d.value]
+                } else {
+                    const biden = {...d.value}
+                    const trump = {...d.value}
 
+                    biden.marginHigh = 0
+                    biden.class = 'biden'
+
+                    trump.marginLow = 0
+                    trump.class='trump'
+
+                    return [biden, trump]
+                }
+            })
+            .join('rect')
+            .attr('x', d => this.scaleX(d.marginLow))
+            .attr('y', 5)
+            .attr('width', d => this.scaleX(d.marginHigh) - this.scaleX(d.marginLow))
+            .attr('height', this.smallVizHeight)
+            .attr('fill', 'none')
+            .attr('stroke', 'none')
+            .attr('opacity', 0.5)
+            .attr('class', d => d.class)
 
     }
 
