@@ -88,7 +88,6 @@ class Table {
             .attr('x', (d, i) => (i + 0.5) * this.labelGap)
             .attr('y', this.vizHeight - 10)
             .attr('class', d => d.party)
-
     }
 
     drawTable() {
@@ -212,7 +211,6 @@ class Table {
             .attr('y1', this.vizHeight)
             .attr('stroke', d => d === 0 ? 'black' : 'lightgray')
             .attr('stroke-width', d => d === 0 ? 2 : 1)
-
     }
 
     addRectangles(containerSelect) {
@@ -265,7 +263,7 @@ class Table {
             .data(d => [d.value])
             .join('circle')
             .attr('cx', d => this.scaleX(d.margin))
-            .attr('cy', 15)
+            .attr('cy', this.vizHeight * 0.5)
             .attr('r', 6)
             .attr('class', d => d.margin <= 0 ? 'biden' : 'trump')
             .attr('opacity', 0.75)
@@ -279,7 +277,34 @@ class Table {
          * Attach click handlers to all the th elements inside the columnHeaders row.
          * The handler should sort based on that column and alternate between ascending/descending.
          */
+        d3.select('#columnHeaders')
+            .selectAll('th')
+            .on('click', el => {
+                const sortBy = d3.select(el.target).attr('id')
+                const headerState = this.headerData.filter(el => el.key === sortBy)[0]
 
+                this.headerData.forEach(el => {
+                    if (el.key !== sortBy) {
+                        el.sorting = false
+                    }
+                })
+
+                d3.select('#columnHeaders')
+                    .selectAll('th')
+                    .classed('sorting', false)
+
+                d3.select(el.target)
+                    .classed('sorting', true)
+
+                if (headerState.sorted) {
+                    headerState.ascending = !headerState.ascending
+                } else {
+                    headerState.sorted = true
+                }
+
+                this.tableData.sort((a,b) => headerState.ascending ? d3.ascending(a[sortBy], b[sortBy]) : d3.descending(a[sortBy], b[sortBy]) )
+                this.drawTable()
+            })
 
     }
 
