@@ -16,19 +16,20 @@ class Table {
             {
                 sorted: false,
                 ascending: false,
-                key: 'state'
+                key: 'state',
+                alterFunc: d => d
             },
             {
                 sorted: false,
                 ascending: false,
                 key: 'mean_netpartymargin',
-                alterFunc: d => Math.abs(+d)
+                alterFunc: d => -parseFloat(d)
             },
             {
                 sorted: false,
                 ascending: false,
                 key: 'winner_Rparty',
-                alterFunc: d => +d
+                alterFunc: d => parseFloat(d)
             },
         ]
 
@@ -312,9 +313,9 @@ class Table {
                 headerState.sorted = true
             }
 
-            this.tableData.sort((a, b) => headerState.ascending ? d3.ascending(a[sortBy], b[sortBy]) : d3.descending(a[sortBy], b[sortBy]))
-            this.tableData.map( (el, idx) => {
-                if(el.isExpanded === true) {
+            this.tableData.sort((a, b) => headerState.ascending ? d3.ascending(d.alterFunc(a[sortBy]), d.alterFunc(b[sortBy])) : d3.descending(d.alterFunc(a[sortBy]), d.alterFunc(b[sortBy])))
+            this.tableData.map((el, idx) => {
+                if (el.isExpanded === true) {
                     el.isExpanded = false
                     this.toggleRow(el, idx)
                 }
@@ -332,10 +333,10 @@ class Table {
          */
         const poll_data = this.pollData.get(rowData.state)
         if (poll_data) {
-            const sortHeader = this.headerData.filter( el => el.sorted === true)
+            const sortHeader = this.headerData.filter(el => el.sorted === true)
 
-            if(sortHeader.length > 0) {
-                const sortBy = sortHeader[0].key === 'state' ? 'name' : 'margin'                
+            if (sortHeader.length > 0) {
+                const sortBy = sortHeader[0].key === 'state' ? 'name' : 'margin'
                 poll_data.sort((a, b) => sortHeader[0].ascending ? d3.ascending(a[sortBy], b[sortBy]) : d3.descending(a[sortBy], b[sortBy]))
             }
 
