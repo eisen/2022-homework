@@ -175,7 +175,7 @@ class LineChart {
     // Render cursor line
     d3.select('#overlay line')
       .attr('stroke', 'black')
-      .attr('y1', 0)
+      .attr('y1', 10)
       .attr('y2', this.height - this.bottom)
       .attr('x1', x)
       .attr('x2', x)
