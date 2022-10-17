@@ -64,7 +64,7 @@ class Table {
                 if (d > 0) {
                     return `+${d}`
                 } else if (d < 0) {
-                    return d
+                    return `+${-d}`
                 } else {
                     return ''
                 }
@@ -270,7 +270,13 @@ class Table {
             .data(d => [d])
             .join('circle')
             .attr('cx', d => this.scaleX(d.value.margin))
-            .attr('cy', this.vizHeight * 0.5)
+            .attr('cy', d => {
+                if (d.isForecast === true) {
+                    return this.vizHeight * 0.5
+                } else {
+                    return this.smallVizHeight * 0.5
+                }
+            })
             .attr('r', d => {
                 if (d.isForecast === true) {
                     return 6
@@ -296,8 +302,8 @@ class Table {
             .join('th')
 
         ths.on('click', (el, d) => {
+            const headerState = d
             const sortBy = d.key
-            const headerState = this.headerData.filter(el => el.key === sortBy)[0]
 
             this.collapseAll()
 

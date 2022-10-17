@@ -1,9 +1,8 @@
-preGrouped = d3.json('./data/senate_polls.json')
-extraCredit = d3.csv('./data/senate_polls.csv')
+// preGrouped = d3.json('./data/senate_polls.json')
+const extraCredit = d3.csv('./data/senate_polls.csv')
 
-byPercentage = (c1, c2) => parseFloat(c1.pct) > parseFloat(c2.pct) ? c1 : c2
 
-Promise.all([d3.csv('./data/senate_forecasts.csv'), extraCredit, preGrouped]).then(data => {
+Promise.all([d3.csv('./data/senate_forecasts.csv'), extraCredit]).then(data => {
     let forecastData = data[0]
     let pollData = d3.rollups(data[1], v => {
         const result = {
@@ -12,12 +11,15 @@ Promise.all([d3.csv('./data/senate_forecasts.csv'), extraCredit, preGrouped]).th
             state: v[0].state
         }
 
-        const repMargin = v.filter( d => d.party === 'REP').reduce( byPercentage, { pct: "0"})
-        const demMargin = v.filter( d => d.party === 'DEM').reduce( byPercentage, { pct: "0"})
-        result.margin = repMargin.pct - demMargin.pct
+        const reps = v.filter(d => d.party === 'REP')
+        const repMargin = reps.length > 0 ? d3.mean(reps, d => parseFloat(d.pct)) : 0
+        const dems = v.filter(d => d.party === 'DEM')
+        const demMargin = dems.length > 0 ? d3.mean(dems, d => parseFloat(d.pct)) : 0
+        
+        result.margin = repMargin - demMargin
 
         return result
-    }, d => d.state, d => d.poll_id).map( el => [el[0], el[1].map( p => p[1])])
+    }, d => d.state, d => d.poll_id).map(el => [el[0], el[1].map(p => p[1])])
 
     /////////////////
     // EXTRA CREDIT//
