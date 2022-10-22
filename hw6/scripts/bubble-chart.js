@@ -1,4 +1,4 @@
-const bubbleChart = (data) => {
+const bubbleChart = () => {
 
     const legendHeight = 30
     const xMargin = 20
@@ -6,12 +6,11 @@ const bubbleChart = (data) => {
     const labels = [{ value: 'Democratic Leaning', class: "democrat" }, { value: 'Republican Leaning', class: "republican" }]
     const legendTicks = [-50, -40, -30, -20, -10, 10, 20, 30, 40, 50]
 
-    const minY = d3.min(data, d => parseFloat(d.sourceY))
-    const maxY = d3.max(data, d => parseFloat(d.sourceY))
-    const height = maxY - minY + 10
+    const height = 150
 
     const svg = d3.select('body')
         .append('svg')
+        .attr('id', 'bubble-chart')
         .attr('width', '67%')
         .attr('height', '100%')
 
@@ -66,25 +65,6 @@ const bubbleChart = (data) => {
         .attr('font-weight', 'bold')
         .attr('font-family', 'Arial, Helvetica, sans-serif')
 
-    legend.selectAll('line')
-        .data(legendTicks)
-        .join('line')
-        .attr('x1', d => scaleX(d))
-        .attr('x2', d => scaleX(d))
-        .attr('y1', 5)
-        .attr('y2', 15)
-        .attr('stroke', d => d < 0 ? 'steelblue' : 'firebrick')
-        .attr('stroke-width', 2)
-        .attr('class', d => d < 0 ? 'democrat' : 'republican')
-
-    legend.append('line')
-        .attr('x1', d => scaleX(0))
-        .attr('x2', d => scaleX(0))
-        .attr('y1', 5)
-        .attr('y2', 15)
-        .attr('stroke', 'black')
-        .attr('stroke-width', 2)
-
     // Setup Lines
     const lines = svg.append('g')
         .attr('id', 'lines')
@@ -121,7 +101,7 @@ const bubbleChart = (data) => {
     }
 }
 
-Promise.all([d3.json('./data/words.json'), d3.csv('./data/words-without-force-positions.csv')]).then((data) => {
-    const chart = bubbleChart(data[0])
-    simulation(data[1], chart)
+d3.csv('./data/words-without-force-positions.csv').then((data) => {
+    const chart = bubbleChart()
+    simulation(data, chart)
 })
