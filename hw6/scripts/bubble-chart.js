@@ -1,4 +1,4 @@
-const bubbleChart = () => {
+const bubbleChart = (data) => {
 
     const legendHeight = 30
     const xMargin = 20
@@ -6,13 +6,19 @@ const bubbleChart = () => {
     const labels = [{ value: 'Democratic Leaning', class: "democrat" }, { value: 'Republican Leaning', class: "republican" }]
     const legendTicks = [-50, -40, -30, -20, -10, 10, 20, 30, 40, 50]
 
-    const height = 150
+    const height = 400
 
-    const svg = d3.select('body')
+    const svg = d3.select('#content')
         .append('svg')
         .attr('id', 'bubble-chart')
         .attr('width', '67%')
-        .attr('height', '100%')
+        .attr('height', height)
+
+    const byCategories = d3.group(data, d => d.category)
+
+    const scaleColor = d3.scaleOrdinal()
+        .domain([byCategories.keys()])
+        .range(d3.schemePastel1)
 
     const bbox = svg.node().getBoundingClientRect()
 
@@ -97,11 +103,8 @@ const bubbleChart = () => {
 
     return {
         scaleX: scaleX,
+        scaleColor: scaleColor,
         height: height
     }
 }
 
-d3.csv('./data/words-without-force-positions.csv').then((data) => {
-    const chart = bubbleChart()
-    simulation(data, chart)
-})

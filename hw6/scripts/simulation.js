@@ -11,12 +11,6 @@ const simulation = (data, props) => {
 
     const bubbles = d3.select('#bubbles')
 
-    const byCategories = d3.group(data, d => d.category)
-
-    const scaleColor = d3.scaleOrdinal()
-        .domain([byCategories.keys()])
-        .range(d3.schemePastel1)
-
     const OnMouseOver = (e, d) => {
         const phrase = `${d.phrase.charAt(0).toUpperCase()}${d.phrase.slice(1)}`
         const partisanUse = `${d.position < 0 ? 'D' : 'R'}+ ${d.position < 0 ? -d.position.toFixed(4) : d.position.toFixed(4)}%`
@@ -66,7 +60,7 @@ const simulation = (data, props) => {
             .attr('cx', d => d.x)
             .attr('cy', d => d.y)
             .attr('r', d => d.total * factor)
-            .attr('fill', d => scaleColor(d.category))
+            .attr('fill', d => props.scaleColor(d.category))
     }
 
     const sim = d3.forceSimulation(data)
@@ -80,8 +74,9 @@ const simulation = (data, props) => {
         .attr('cx', d => d.x)
         .attr('cy', d => d.y)
         .attr('r', d => parseInt(d.total))
-        .attr('fill', d => scaleColor(d.category))
+        .attr('fill', d => props.scaleColor(d.category))
         .attr('stroke', 'lightgray')
+        .classed('clickable', true)
         .on('mouseover', OnMouseOver)
         .on('mouseout', OnMouseOut)
 

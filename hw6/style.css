@@ -7,3 +7,12 @@
     color: steelblue;
     fill: steelblue;
 }
+
+.content {
+    display: flex;
+}
+
+.clickable {
+    cursor: pointer;
+    user-select: none;
+}
