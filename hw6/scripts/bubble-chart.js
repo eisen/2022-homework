@@ -20,6 +20,13 @@ const bubbleChart = (data) => {
         .domain([byCategories.keys()])
         .range(d3.schemePastel1)
 
+    const minTotal = d3.min(data, d => parseInt(d.total))
+    const maxTotal = d3.max(data, d => parseInt(d.total))
+
+    const scaleRadius = d3.scaleLinear()
+        .domain([minTotal, maxTotal])
+        .range([2.5, 10.5])
+
     const bbox = svg.node().getBoundingClientRect()
 
     svg.selectAll('text')
@@ -104,6 +111,7 @@ const bubbleChart = (data) => {
     return {
         scaleX: scaleX,
         scaleColor: scaleColor,
+        scaleRadius: scaleRadius,
         height: height
     }
 }

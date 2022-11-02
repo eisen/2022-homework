@@ -73,7 +73,7 @@ const simulation = (data, props) => {
         .join('circle')
         .attr('cx', d => d.x)
         .attr('cy', d => d.y)
-        .attr('r', d => parseInt(d.total))
+        .attr('r', d => props.scaleRadius(parseInt(d.total)))
         .attr('fill', d => props.scaleColor(d.category))
         .attr('stroke', 'lightgray')
         .classed('clickable', true)
