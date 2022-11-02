@@ -7,50 +7,44 @@ const table = (data, props) => {
     const widthModifier = 0.24
 
     for (const d of data) {
-        d.position = d.percent_of_r_speeches - d.percent_of_d_speeches
+        d.frequency = (parseFloat(d.percent_of_r_speeches) + parseFloat(d.percent_of_d_speeches)) / 2
+        d.position = parseFloat(d.percent_of_r_speeches) - parseFloat(d.percent_of_d_speeches)
+        d.percentage = parseFloat(d.percent_of_r_speeches) + parseFloat(d.percent_of_d_speeches)
     }
 
     const columns = [
         {
             id: "phrase",
-            sortByA: "phrase",
-            sortByD: "phrase",
+            sort: "phrase",
             title: "Phrase",
             ascending: true,
-            ascendingOnly: false,
             sorting: false,
             domain: [],
             alterFunc: d => d
         },
         {
             id: "frequency",
-            sortByA: "position",
-            sortByD: "position",
+            sort: "position",
             title: "Frequency",
             ascending: false,
-            ascendingOnly: false,
             sorting: false,
             domain: ["0.0", "0.5", "1.0"],
             alterFunc: d => Math.abs(d)
         },
         {
             id: "percentage",
-            sortByA: "percent_of_d_speeches",
-            sortByD: "percent_of_r_speeches",
+            sort: "percentage",
             title: "Percentage",
             ascending: false,
-            ascendingOnly: true,
             sorting: false,
             domain: [-100, -50, 0, 50, 100],
-            alterFunc: d => parseFloat(d)
+            alterFunc: d => d
         },
         {
             id: "total",
-            sortByA: "total",
-            sortByD: "total",
+            sort: "total",
             title: "Total",
             ascending: false,
-            ascendingOnly: false,
             sorting: false,
             domain: [],
             alterFunc: d => parseInt(d)
@@ -91,13 +85,13 @@ const table = (data, props) => {
         .attr('x', (d, i) => i * columnWidth)
         .classed('clickable', true)
         .on('click', (e, d) => {
-            for( let c of columns ) {
+            for (let c of columns) {
                 c.sorting = false
             }
 
             d.ascending = !d.ascending
             d.sorting = true
-            
+
             sortTable()
         })
 
@@ -219,7 +213,7 @@ const table = (data, props) => {
             .join('rect')
             .attr('x', 0)
             .attr('y', (d, i) => i * 25 + 1)
-            .attr('width', d => scaleFrequency(Math.abs(d.position) * 0.01))
+            .attr('width', d => scaleFrequency(Math.abs(d.position) * 0.01) - xMargin)
             .attr('height', 23)
             .attr('fill', d => props.scaleColor(d.category))
 
@@ -256,13 +250,9 @@ const table = (data, props) => {
         const d = columns.filter((el => el.sorting))[0]
         //console.log(d)
         data = data.sort((a, b) => {
-            const ac = d.ascending ? d.alterFunc(a[d.sortByA]) : d.alterFunc(a[d.sortByD])
-            const bc = d.ascending ? d.alterFunc(b[d.sortByA]) : d.alterFunc(b[d.sortByD])
-            if(d.ascendingOnly) {
-                return d3.descending(ac, bc)
-            } else {
-                return d.ascending ? d3.ascending(ac, bc) : d3.descending(ac, bc)
-            }
+            const as = d.alterFunc(a[d.sort])
+            const bs = d.alterFunc(b[d.sort])
+            return d.ascending ? d3.ascending(as, bs) : d3.descending(as, bs)
         })
         updateTable()
     }
