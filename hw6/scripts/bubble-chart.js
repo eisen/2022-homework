@@ -293,8 +293,8 @@ const bubbleChart = (data) => {
         scaleRadius: scaleRadius,
         height: height,
         margin: bubbleMargin,
-        update: OnUpdate,
         grouped: grouped,
+        update: OnUpdate,
         categoryIndex: categoryIndex
     }
 

@@ -60,7 +60,7 @@ const simulation = (data, props) => {
             .attr('fill', d => props.scaleColor(d.category))
     }
 
-    let yForce = d3.forceY().y(d => props.grouped ? (props.height / 2) : (props.categoryIndex(d.category) + 0.5) * props.height)
+    const yForce = d3.forceY().y(d => props.grouped ? (props.height / 2) : (props.categoryIndex(d.category) + 0.5) * props.height)
     const sim = d3.forceSimulation(data)
         .force("x", d3.forceX().x(d => props.scaleX(parseInt(d.position))))
         .force("y", yForce)
@@ -85,8 +85,7 @@ const simulation = (data, props) => {
         sim.force('x').initialize(data)
         sim.force('y').initialize(data)
         sim.force('collide').initialize(data)
-        sim
-            .alpha(1)
+        sim.alpha(1)
             .alphaTarget(0.0)
             .restart()
     }
