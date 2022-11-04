@@ -9,14 +9,18 @@ const bubbleChart = (data) => {
     let height = 300
     let sim = null
     let duration = 300
+    let activeBrush = null
+    let activeBrushNode = null
 
     const OnUpdate = (in_sim) => {
         if (sim === null) {
             sim = in_sim
         }
+
         bubble_chart.transition()
             .duration(duration)
             .attr('height', height)
+
         if (!grouped) {
             category_labels.selectAll('text')
                 .data(byCategories)
@@ -71,6 +75,44 @@ const bubbleChart = (data) => {
                 .attr('opacity', 0)
                 .remove()
         }
+
+        // Setup Brushes
+        activeBrush = null
+        activeBrushNode = null
+
+        brushes.selectAll('g')
+            .remove()
+
+        brushes.selectAll('g')
+            .data(d => !grouped ? byCategories : [0])
+            .enter()
+            .append('g')
+            .attr('class', 'brushes')
+            .attr('transform', (d, i) => `translate(${0}, ${i * 150 + 60})`)
+            .append('rect')
+            .attr('x', 0)
+            .attr('width', scaleX(60))
+            .attr('y', 0)
+            .attr('height', (d, i) => 150)
+            .attr('fill', 'none')
+
+        const brushGroups = d3.selectAll('.brushes')
+
+        brushGroups.each((d, i, n) => {
+            const brushGroup = d3.select(n[i])
+
+            const brush = d3.brushX()
+                .extent([[0, 0], [scaleX(60), 150]])
+                .on('start', ({ selection }) => {
+                    if (activeBrush && brushGroup !== activeBrushNode) {
+                        activeBrushNode.call(activeBrush.move, null)
+                    }
+                    activeBrush = brush
+                    activeBrushNode = brushGroup
+                })
+
+            brushGroup.call(brush)
+        })
 
         sim.start(grouped)
     }
@@ -195,8 +237,13 @@ const bubbleChart = (data) => {
         .attr('id', 'bubbles')
         .attr('transform', `translate(0, ${yMargin})`)
 
+    // Setup Categories
     const category_labels = bubble_chart.append('g')
         .attr('id', 'category-labels')
+
+    // Setup Brushes
+    const brushes = svg.append('g')
+        .attr('id', 'brushes')
 
     const categoryIndex = (category) => {
         let idx = -1
