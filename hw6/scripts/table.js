@@ -1,4 +1,4 @@
-const table = (data, props) => {
+const table = (props) => {
 
     const xMargin = 20
     const yMargin = 20
@@ -6,11 +6,7 @@ const table = (data, props) => {
     const rowHeight = 25
     const widthModifier = 0.24
 
-    for (const d of data) {
-        d.frequency = (parseFloat(d.percent_of_r_speeches) + parseFloat(d.percent_of_d_speeches)) / 2
-        d.position = parseFloat(d.percent_of_r_speeches) - parseFloat(d.percent_of_d_speeches)
-        d.percentage = parseFloat(d.percent_of_r_speeches) + parseFloat(d.percent_of_d_speeches)
-    }
+    let data = []
 
     const columns = [
         {
@@ -198,7 +194,17 @@ const table = (data, props) => {
         .attr('id', 'totals')
         .attr('transform', `translate(${3.5 * columnWidth},${0})`)
 
-    const updateTable = () => {
+    const updateTable = (in_data) => {
+        data = in_data
+
+        svg.attr('height', (data.length + 1) * rowHeight + headerHeight)
+
+        for (const d of data) {
+            d.frequency = (parseFloat(d.percent_of_r_speeches) + parseFloat(d.percent_of_d_speeches)) / 2
+            d.position = parseFloat(d.percent_of_r_speeches) - parseFloat(d.percent_of_d_speeches)
+            d.percentage = parseFloat(d.percent_of_r_speeches) + parseFloat(d.percent_of_d_speeches)
+        }
+
         phrases.selectAll('text')
             .data(data)
             .join('text')
@@ -248,14 +254,18 @@ const table = (data, props) => {
 
     const sortTable = () => {
         const d = columns.filter((el => el.sorting))[0]
-        //console.log(d)
+
         data = data.sort((a, b) => {
             const as = d.alterFunc(a[d.sort])
             const bs = d.alterFunc(b[d.sort])
             return d.ascending ? d3.ascending(as, bs) : d3.descending(as, bs)
         })
-        updateTable()
+        updateTable(data)
     }
 
-    updateTable()
+    updateTable(data)
+
+    return {
+        update: updateTable
+    }
 }

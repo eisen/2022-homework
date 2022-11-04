@@ -7,14 +7,19 @@ const bubbleChart = (data) => {
     const legendTicks = [-50, -40, -30, -20, -10, 10, 20, 30, 40, 50]
 
     let height = 300
-    let sim = null
     let duration = 300
+    let sim = null
+    let tab = null
     let activeBrush = null
     let activeBrushNode = null
 
-    const OnUpdate = (in_sim) => {
+    const OnUpdate = (in_sim, in_tab) => {
         if (sim === null) {
             sim = in_sim
+        }
+
+        if (tab === null) {
+            tab = in_tab
         }
 
         bubble_chart.transition()
@@ -100,21 +105,42 @@ const bubbleChart = (data) => {
 
         brushGroups.each((d, i, n) => {
             const brushGroup = d3.select(n[i])
+            const y0 = i * 150 + 60
+            const y1 = y0 + 150
 
             const brush = d3.brushX()
                 .extent([[0, 0], [scaleX(60), 150]])
-                .on('start', ({ selection }) => {
+                .on('start brush end', ({ selection }) => {
                     if (activeBrush && brushGroup !== activeBrushNode) {
                         activeBrushNode.call(activeBrush.move, null)
                     }
                     activeBrush = brush
                     activeBrushNode = brushGroup
+
+                    sim.bubbles
+                        .attr('stroke', 'gray')
+                        .attr('fill', 'gray')
+
+                    if (selection) {
+                        const [x0, x1] = selection
+                        const values = sim.bubbles.filter(d => x0 < d.x && d.x < x1 && y0 < d.y && d.y < y1)
+                            .attr('fill', d => scaleColor(d.category))
+                            .data()
+
+                        tab.update(values)
+                    } else {
+                        sim.bubbles
+                            .attr('stroke', 'lightgray')
+                            .attr('fill', d => scaleColor(d.category))
+                        tab.update(data)
+                    }
                 })
 
             brushGroup.call(brush)
         })
 
         sim.start(grouped)
+        tab.update(data)
     }
 
     const svg = d3.select('#content')

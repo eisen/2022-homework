@@ -1,6 +1,6 @@
 const simulation = (data, props) => {
 
-    const bubbles = d3.select('#bubbles')
+    const bubblesGroup = d3.select('#bubbles')
     const bubble_chart = d3.select('#bubble-chart')
     const tooltip = bubble_chart.append('g')
 
@@ -51,7 +51,7 @@ const simulation = (data, props) => {
     }
 
     const ticked = () => {
-        bubbles.selectAll('circle')
+        bubblesGroup.selectAll('circle')
             .data(data)
             .join('circle')
             .attr('cx', d => d.x)
@@ -68,7 +68,7 @@ const simulation = (data, props) => {
 
     sim.on("tick", ticked)
 
-    bubbles.selectAll('circle')
+    const bubbles = bubblesGroup.selectAll('circle')
         .data(data)
         .join('circle')
         .attr('cx', d => d.x)
@@ -85,7 +85,6 @@ const simulation = (data, props) => {
         sim.force('x').initialize(data)
         sim.force('y').initialize(data)
         sim.force('collide').initialize(data)
-        //console.log(sim.alphaTarget())
         sim
             .alpha(1)
             .alphaTarget(0.0)
@@ -93,6 +92,7 @@ const simulation = (data, props) => {
     }
 
     return {
-        start: OnStart
+        start: OnStart,
+        bubbles: bubbles
     }
 }       
