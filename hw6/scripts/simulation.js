@@ -1,8 +1,13 @@
 const simulation = (data, props) => {
 
+    const tooltipHeight = 90
+    const tooltipWidth = 200
+    const tooltipMargin = 10
+
     const bubblesGroup = d3.select('#bubbles')
     const bubble_chart = d3.select('#bubble-chart')
     const tooltip = bubble_chart.append('g')
+        .attr('id', 'tooltip')
 
     for (const d of data) {
         d.position = d.percent_of_r_speeches - d.percent_of_d_speeches
@@ -16,16 +21,18 @@ const simulation = (data, props) => {
         d3.select(e.target)
             .attr('stroke', 'black')
 
+        const tooltipX = d.position < 0 ? d.x + props.scaleRadius(d.total) + tooltipMargin : d.x - props.scaleRadius(d.total) - tooltipWidth - tooltipMargin
+        const tooltipY = props.grouped ? (props.height - tooltipHeight) * 0.5 + props.margin : (props.categoryIndex(d.category) * props.height) + (props.height - tooltipHeight) * 0.5 + props.margin
         tooltip.attr('opacity', 1)
-            .attr('transform', `translate(${d.position < 0 ? d.x + props.scaleRadius(d.total) + 10 : d.x - props.scaleRadius(d.total) - 200 - 10}, ${d.y})`)
+            .attr('transform', `translate(${tooltipX}, ${tooltipY})`)
 
         tooltip.selectAll('rect')
             .data([0])
             .join('rect')
             .attr('x', 0)
             .attr('y', 0)
-            .attr('width', 200)
-            .attr('height', 90)
+            .attr('width', tooltipWidth)
+            .attr('height', tooltipHeight)
             .attr('rx', 5)
             .attr('stroke', 'black')
             .attr('fill', 'white')
@@ -37,7 +44,7 @@ const simulation = (data, props) => {
             .text(el => el)
             .attr('text-anchor', 'middle')
             .attr('x', el => 100)
-            .attr('y', (el, i) => i * 30 + 20)
+            .attr('y', (el, i) => i * (tooltipHeight / 3) + 20)
             .attr('font-family', 'Arial, Helvetica, sans-serif')
             .attr('stroke', 'lightgray')
     }
