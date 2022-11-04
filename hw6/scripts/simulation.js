@@ -1,15 +1,12 @@
 const simulation = (data, props) => {
 
-    const factor = 1 / 3
-
-    const tooltip = d3.select('#bubble-chart')
-        .append('g')
+    const bubbles = d3.select('#bubbles')
+    const bubble_chart = d3.select('#bubble-chart')
+    const tooltip = bubble_chart.append('g')
 
     for (const d of data) {
         d.position = d.percent_of_r_speeches - d.percent_of_d_speeches
     }
-
-    const bubbles = d3.select('#bubbles')
 
     const OnMouseOver = (e, d) => {
         const phrase = `${d.phrase.charAt(0).toUpperCase()}${d.phrase.slice(1)}`
@@ -20,7 +17,7 @@ const simulation = (data, props) => {
             .attr('stroke', 'black')
 
         tooltip.attr('opacity', 1)
-            .attr('transform', `translate(${d.position < 0 ? d.x + (d.total * factor) : d.x - (d.total * factor) - 200}, ${e.offsetY + (d.total * factor)})`)
+            .attr('transform', `translate(${d.position < 0 ? d.x + props.scaleRadius(d.total) + 10 : d.x - props.scaleRadius(d.total) - 200 - 10}, ${d.y})`)
 
         tooltip.selectAll('rect')
             .data([0])
@@ -59,14 +56,17 @@ const simulation = (data, props) => {
             .join('circle')
             .attr('cx', d => d.x)
             .attr('cy', d => d.y)
-            .attr('r', d => d.total * factor)
+            .attr('r', d => props.scaleRadius(d.total))
             .attr('fill', d => props.scaleColor(d.category))
     }
 
+    let yForce = d3.forceY().y(d => props.grouped ? (props.height - 60) / 2 : props.categoryIndex(d.category) * 150 + 120)
     const sim = d3.forceSimulation(data)
         .force("x", d3.forceX().x(d => props.scaleX(parseInt(d.position))))
-        .force("y", d3.forceY().y(props.height / 2))
-        .force("collide", d3.forceCollide().radius(d => (d.total * factor) + 0.5))
+        .force("y", yForce)
+        .force("collide", d3.forceCollide().radius(d => props.scaleRadius(d.total) + 0.5))
+
+    sim.on("tick", ticked)
 
     bubbles.selectAll('circle')
         .data(data)
@@ -80,5 +80,19 @@ const simulation = (data, props) => {
         .on('mouseover', OnMouseOver)
         .on('mouseout', OnMouseOut)
 
-    sim.on("tick", ticked)
+    const OnStart = (grouped) => {
+        props.grouped = grouped
+        sim.force('x').initialize(data)
+        sim.force('y').initialize(data)
+        sim.force('collide').initialize(data)
+        //console.log(sim.alphaTarget())
+        sim
+            .alpha(1)
+            .alphaTarget(0.0)
+            .restart()
+    }
+
+    return {
+        start: OnStart
+    }
 }       
