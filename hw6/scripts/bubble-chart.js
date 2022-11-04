@@ -173,6 +173,20 @@ const bubbleChart = (data) => {
 
     d3.select('#toggle').on('click', toggleGrouping)
 
+    let highlight = false
+    const toggleHighlight = (ev) => {
+        const button = d3.select(ev.target)
+        const icon = button.select('svg')
+
+        button.classed('bg-steelblue', highlight).classed('bg-white', !highlight)
+        button.classed('border-transparemt', highlight).classed('border-steelblue', !highlight)
+        icon.classed('fill-white', highlight).classed('fill-steelblue', !highlight)
+        highlight = !highlight
+        OnUpdate()
+    }
+
+    d3.select('#highlight').on('click', toggleHighlight)
+
     const byCategories = d3.group(data, d => d.category)
     const category_size = d3.maxIndex(byCategories.keys()) + 1
 
@@ -263,6 +277,10 @@ const bubbleChart = (data) => {
         .attr('stroke-width', 2)
         .attr('opacity', "0.15")
 
+    // Setup Brushes
+    const brushes = svg.append('g')
+        .attr('id', 'brushes')
+
     // Setup Bubbles
     const bubbles = svg.append('g')
         .attr('id', 'bubbles')
@@ -271,10 +289,6 @@ const bubbleChart = (data) => {
     // Setup Categories
     const category_labels = bubble_chart.append('g')
         .attr('id', 'category-labels')
-
-    // Setup Brushes
-    const brushes = svg.append('g')
-        .attr('id', 'brushes')
 
     const categoryIndex = (category) => {
         let idx = -1
