@@ -1,12 +1,17 @@
 const bubbleChart = (data) => {
 
-    const legendHeight = 30
     const xMargin = 20
     const yMargin = 20
+    const bubbleMargin = 60
+    const textMargin = 20
     const labels = [{ value: 'Democratic Leaning', class: "democrat" }, { value: 'Republican Leaning', class: "republican" }]
     const legendTicks = [-50, -40, -30, -20, -10, 10, 20, 30, 40, 50]
 
-    let height = 300
+    const height = 150
+    const legendHeight = 30
+
+    let calc_height = height + bubbleMargin
+
     let duration = 300
     let sim = null
     let tab = null
@@ -24,7 +29,7 @@ const bubbleChart = (data) => {
 
         bubble_chart.transition()
             .duration(duration)
-            .attr('height', height)
+            .attr('height', calc_height)
 
         if (!grouped) {
             category_labels.selectAll('text')
@@ -36,15 +41,15 @@ const bubbleChart = (data) => {
                 .attr('font-family', 'Arial, Helvetica, sans-serif')
                 .attr('fill', 'gray')
                 .attr('x', 10)
-                .attr('y', 80)
+                .attr('y', bubbleMargin)
                 .attr('opacity', 0)
                 .transition()
                 .duration(duration)
-                .attr('y', (d, i) => i * 150 + 80)
+                .attr('y', (d, i) => i * height + bubbleMargin + textMargin)
                 .attr('opacity', 1)
 
             category_labels.selectAll('line')
-                .data(byCategories)
+                .data(d => new Array(d3.maxIndex(byCategories) + 2))
                 .enter()
                 .append('line')
                 .attr('stroke', 'lightgray')
@@ -56,8 +61,8 @@ const bubbleChart = (data) => {
                 .attr('opacity', 0)
                 .transition()
                 .duration(duration)
-                .attr('y1', (d, i) => (i + 1) * 150 + 60)
-                .attr('y2', (d, i) => (i + 1) * 150 + 60)
+                .attr('y1', (d, i) => i * height + bubbleMargin)
+                .attr('y2', (d, i) => i * height + bubbleMargin)
                 .attr('opacity', 1)
 
         } else {
@@ -93,23 +98,23 @@ const bubbleChart = (data) => {
             .enter()
             .append('g')
             .attr('class', 'brushes')
-            .attr('transform', (d, i) => `translate(${0}, ${i * 150 + 60})`)
+            .attr('transform', (d, i) => `translate(${0}, ${i * height + 60})`)
             .append('rect')
             .attr('x', 0)
             .attr('width', scaleX(60))
             .attr('y', 0)
-            .attr('height', (d, i) => 150)
+            .attr('height', (d, i) => height)
             .attr('fill', 'none')
 
         const brushGroups = d3.selectAll('.brushes')
 
         brushGroups.each((d, i, n) => {
             const brushGroup = d3.select(n[i])
-            const y0 = i * 150 + 60
-            const y1 = y0 + 150
+            const y0 = i * height
+            const y1 = y0 + height
 
             const brush = d3.brushX()
-                .extent([[0, 0], [scaleX(60), 150]])
+                .extent([[0, 0], [scaleX(60), height]])
                 .on('start brush end', ({ selection }) => {
                     if (activeBrush && brushGroup !== activeBrushNode) {
                         activeBrushNode.call(activeBrush.move, null)
@@ -147,7 +152,7 @@ const bubbleChart = (data) => {
         .append('svg')
         .attr('id', 'bubble-chart')
         .attr('width', '67%')
-        .attr('height', height)
+        .attr('height', height + bubbleMargin)
 
     const bubble_chart = d3.select('#bubble-chart')
 
@@ -162,7 +167,7 @@ const bubbleChart = (data) => {
         foreground.classed('translate-x-0', !grouped).classed('translate-x-5', grouped)
 
         grouped = !grouped
-        height = grouped ? 300 : category_size * 230 + 70
+        calc_height = grouped ? height + bubbleMargin : category_size * height + bubbleMargin + 1
         OnUpdate()
     }
 
@@ -244,7 +249,7 @@ const bubbleChart = (data) => {
         .attr('x1', d => scaleX(d))
         .attr('x2', d => scaleX(d))
         .attr('y1', 0)
-        .attr('y2', (d, i) => category_size * 150 + 70)
+        .attr('y2', (d, i) => category_size * height + bubbleMargin)
         .attr('stroke', d => d < 0 ? 'steelblue' : d > 0 ? 'firebrick' : 'black')
         .attr('stroke-width', d => d % 10 === 0 ? 3 : 1)
         .attr('opacity', "0.15")
@@ -253,7 +258,7 @@ const bubbleChart = (data) => {
         .attr('x1', d => scaleX(0))
         .attr('x2', d => scaleX(0))
         .attr('y1', 0)
-        .attr('y2', (d, i) => category_size * 150 + 70)
+        .attr('y2', (d, i) => category_size * height + bubbleMargin)
         .attr('stroke', 'gray')
         .attr('stroke-width', 2)
         .attr('opacity', "0.15")
@@ -261,7 +266,7 @@ const bubbleChart = (data) => {
     // Setup Bubbles
     const bubbles = svg.append('g')
         .attr('id', 'bubbles')
-        .attr('transform', `translate(0, ${yMargin})`)
+        .attr('transform', `translate(0, ${bubbleMargin})`)
 
     // Setup Categories
     const category_labels = bubble_chart.append('g')
@@ -287,6 +292,7 @@ const bubbleChart = (data) => {
         scaleColor: scaleColor,
         scaleRadius: scaleRadius,
         height: height,
+        margin: bubbleMargin,
         update: OnUpdate,
         grouped: grouped,
         categoryIndex: categoryIndex
