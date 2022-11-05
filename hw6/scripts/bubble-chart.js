@@ -6,6 +6,9 @@ const bubbleChart = (data) => {
     const textMargin = 20
     const labels = [{ value: 'Democratic Leaning', class: "democrat" }, { value: 'Republican Leaning', class: "republican" }]
     const legendTicks = [-50, -40, -30, -20, -10, 10, 20, 30, 40, 50]
+    const highlightHeight = 90
+    const highlightWidth = 300
+    const highlightMargin = 10
 
     const height = 150
     const legendHeight = 30
@@ -18,7 +21,7 @@ const bubbleChart = (data) => {
     let activeBrush = null
     let activeBrushNode = null
 
-    const OnUpdate = (in_sim, in_tab) => {
+    const OnUpdate = (runSim, in_sim, in_tab) => {
         if (sim === null) {
             sim = in_sim
         }
@@ -116,6 +119,10 @@ const bubbleChart = (data) => {
             const brush = d3.brushX()
                 .extent([[0, 0], [scaleX(60), height]])
                 .on('start brush end', ({ selection }) => {
+                    if (highlight) {
+                        toggleHighlight()
+                        return
+                    }
                     if (activeBrush && brushGroup !== activeBrushNode) {
                         activeBrushNode.call(activeBrush.move, null)
                     }
@@ -144,7 +151,9 @@ const bubbleChart = (data) => {
             brushGroup.call(brush)
         })
 
-        sim.start(grouped)
+        if (runSim) {
+            sim.start(grouped)
+        }
         tab.update(data)
     }
 
@@ -158,31 +167,90 @@ const bubbleChart = (data) => {
 
     let grouped = true
     const toggleGrouping = (ev) => {
+        if (highlight) {
+            toggleHighlight()
+        }
         const button = d3.select(ev.target)
         const background = button.select('#background')
         const foreground = button.select('#foreground')
-
 
         background.classed('bg-gray-200', !grouped).classed('bg-steelblue', grouped)
         foreground.classed('translate-x-0', !grouped).classed('translate-x-5', grouped)
 
         grouped = !grouped
         calc_height = grouped ? height + bubbleMargin : category_size * height + bubbleMargin + 1
-        OnUpdate()
+        OnUpdate(true)
     }
 
     d3.select('#toggle').on('click', toggleGrouping)
 
     let highlight = false
     const toggleHighlight = (ev) => {
-        const button = d3.select(ev.target)
-        const icon = button.select('svg')
+        const icon = highlightButton.select('svg')
 
-        button.classed('bg-steelblue', highlight).classed('bg-white', !highlight)
-        button.classed('border-transparemt', highlight).classed('border-steelblue', !highlight)
+        highlightButton.classed('bg-steelblue', highlight).classed('bg-white', !highlight)
+        highlightButton.classed('border-transparemt', highlight).classed('border-steelblue', !highlight)
         icon.classed('fill-white', highlight).classed('fill-steelblue', !highlight)
         highlight = !highlight
-        OnUpdate()
+
+        const demHighlightX = highlight ? demBubble.x + highlightMargin : -highlightWidth
+        const repHighlightX = highlight ? repBubble.x - highlightWidth - highlightMargin : -highlightWidth
+        const demHighlightY = grouped ? (height - highlightHeight) * 0.5 + bubbleMargin : (categoryIndex(demBubble.category) * height) - (height + highlightHeight) * 0.5 + bubbleMargin
+        const repHighlightY = grouped ? (height - highlightHeight) * 0.5 + bubbleMargin : (categoryIndex(demBubble.category) * height) - (height + highlightHeight) * 0.5 + bubbleMargin
+        demHighlight.attr('transform', `translate(${demHighlightX}, ${demHighlightY})`)
+        repHighlight.attr('transform', `translate(${repHighlightX}, ${repHighlightY})`)
+
+        if (highlight) {
+            demHighlight.selectAll('line')
+                .data([demBubble])
+                .join('line')
+                .attr('x1', d => 0)
+                .attr('x2', d => -highlightMargin)
+                .attr('y1', d => highlightHeight - highlightMargin)
+                .attr('y2', d => d.y - height * 0.5 + highlightHeight * 0.5 + scaleRadius(parseInt(d.total)))
+                .attr('stroke', 'black')
+                .attr('stroke-width', 2)
+
+            demHighlight.selectAll('circle')
+                .data([demBubble])
+                .join('circle')
+                .attr('cx', d => -highlightMargin)
+                .attr('cy', d => d.y - height * 0.5 + highlightHeight * 0.5)
+                .attr('r', d => props.scaleRadius(parseInt(d.total)))
+                .attr('fill', 'steelblue')
+                .attr('stroke', 'black')
+
+            repHighlight.selectAll('line')
+                .data([repBubble])
+                .join('line')
+                .attr('x1', d => highlightWidth)
+                .attr('x2', d => d.x - repHighlightX)
+                .attr('y1', d => highlightHeight - highlightMargin)
+                .attr('y2', d => d.y - height * 0.5 + highlightHeight * 0.5 + scaleRadius(parseInt(d.total)))
+                .attr('stroke', 'black')
+                .attr('stroke-width', 2)
+
+            repHighlight.selectAll('circle')
+                .data([repBubble])
+                .join('circle')
+                .attr('cx', d => d.x - repHighlightX)
+                .attr('cy', d => d.y - height * 0.5 + highlightHeight * 0.5)
+                .attr('r', d => props.scaleRadius(parseInt(d.total)))
+                .attr('fill', 'firebrick')
+                .attr('stroke', 'black')
+        } else {
+            demHighlight.selectAll('line')
+                .remove()
+            demHighlight.selectAll('circle')
+                .remove()
+
+            repHighlight.selectAll('line')
+                .remove()
+            repHighlight.selectAll('circle')
+                .remove()
+        }
+
+        OnUpdate(false) // Don't rerun sim
     }
 
     d3.select('#highlight').on('click', toggleHighlight)
@@ -289,6 +357,66 @@ const bubbleChart = (data) => {
     // Setup Categories
     const category_labels = bubble_chart.append('g')
         .attr('id', 'category-labels')
+
+    // Setup highlights
+    const demBubble = d3.filter(data, d => d.phrase === "minimum wage")[0]
+    const repBubble = d3.filter(data, d => d.phrase === "doing business")[0]
+
+    const demHighlight = bubble_chart.append('g')
+        .attr('id', 'dem-highlight')
+        .attr('transform', `translate(${-highlightWidth}, 0)`)
+
+    demHighlight.selectAll('rect')
+        .data([demBubble])
+        .join('rect')
+        .attr('x', d => 0)
+        .attr('y', d => 0)
+        .attr('width', highlightWidth)
+        .attr('height', highlightHeight)
+        .attr('rx', 5)
+        .attr('stroke', 'black')
+        .attr('stroke-width', 2)
+        .attr('fill', 'white')
+        .attr('opacity', 0.75)
+
+    demHighlight.selectAll('text')
+        .data([`Democrats spoke ${demBubble.percent_of_d_speeches}%`, `about "${demBubble.phrase}" while`, `Republicans didn't mention it once`])
+        .join('text')
+        .text(d => d)
+        .attr('text-anchor', 'middle')
+        .attr('x', d => 150)
+        .attr('y', (d, i) => i * (highlightHeight / 3) + 20)
+        .attr('font-family', 'Arial, Helvetica, sans-serif')
+        .attr('stroke', 'gray')
+
+    const repHighlight = bubble_chart.append('g')
+        .attr('id', 'rep-highlight')
+        .attr('transform', `translate(${-highlightWidth}, 0)`)
+
+    repHighlight.selectAll('rect')
+        .data([repBubble])
+        .join('rect')
+        .attr('x', d => 0)
+        .attr('y', d => 0)
+        .attr('width', highlightWidth)
+        .attr('height', highlightHeight)
+        .attr('rx', 5)
+        .attr('stroke', 'black')
+        .attr('stroke-width', 2)
+        .attr('fill', 'white')
+        .attr('opacity', 0.75)
+
+    repHighlight.selectAll('text')
+        .data([`Republicans spoke ${repBubble.percent_of_r_speeches}%`, `about "${repBubble.phrase}" while`, `Democrats didn't mention it once`])
+        .join('text')
+        .text(d => d)
+        .attr('text-anchor', 'middle')
+        .attr('x', d => 150)
+        .attr('y', (d, i) => i * (highlightHeight / 3) + 20)
+        .attr('font-family', 'Arial, Helvetica, sans-serif')
+        .attr('stroke', 'gray')
+
+    const highlightButton = d3.select('#highlight')
 
     const categoryIndex = (category) => {
         let idx = -1
