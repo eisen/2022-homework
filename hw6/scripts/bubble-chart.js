@@ -185,12 +185,7 @@ const bubbleChart = (data) => {
     d3.select('#toggle').on('click', toggleGrouping)
 
     let highlight = false
-    const toggleHighlight = (ev) => {
-        const icon = highlightButton.select('svg')
-
-        highlightButton.classed('bg-steelblue', highlight).classed('bg-white', !highlight)
-        highlightButton.classed('border-transparemt', highlight).classed('border-steelblue', !highlight)
-        icon.classed('fill-white', highlight).classed('fill-steelblue', !highlight)
+    const toggleHighlight = () => {
         highlight = !highlight
 
         const demHighlightX = highlight ? demBubble.x + highlightMargin : -highlightWidth
@@ -415,8 +410,6 @@ const bubbleChart = (data) => {
         .attr('y', (d, i) => i * (highlightHeight / 3) + 20)
         .attr('font-family', 'Arial, Helvetica, sans-serif')
         .attr('stroke', 'gray')
-
-    const highlightButton = d3.select('#highlight')
 
     const categoryIndex = (category) => {
         let idx = -1
