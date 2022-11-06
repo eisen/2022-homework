@@ -195,7 +195,7 @@ const table = (props) => {
         .attr('transform', `translate(${3.5 * columnWidth},${0})`)
 
     const updateTable = (in_data) => {
-        data = in_data
+        data = [...in_data] // Clone data to avoid breaking simulation run
 
         svg.attr('height', (data.length + 1) * rowHeight + headerHeight)
 
