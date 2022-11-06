@@ -21,6 +21,36 @@ const bubbleChart = (data) => {
     let activeBrush = null
     let activeBrushNode = null
 
+    const OnBrush = ({ selection }, props) => {
+        if (highlight) {
+            return
+        }
+
+        if (activeBrush && props.brushGroup !== activeBrushNode) {
+            activeBrushNode.call(activeBrush.move, null)
+        }
+        activeBrush = props.brush
+        activeBrushNode = props.brushGroup
+
+        sim.bubbles
+            .attr('stroke', 'gray')
+            .attr('fill', 'gray')
+
+        if (selection) {
+            const [x0, x1] = selection
+            const values = sim.bubbles.filter(d => x0 < d.x && d.x < x1 && props.y0 < d.y && d.y < props.y1)
+                .attr('fill', d => scaleColor(d.category))
+                .data()
+
+            tab.update(values)
+        } else {
+            sim.bubbles
+                .attr('stroke', 'lightgray')
+                .attr('fill', d => scaleColor(d.category))
+            tab.update(data)
+        }
+    }
+
     const OnUpdate = (runSim, in_sim, in_tab) => {
         if (sim === null) {
             sim = in_sim
@@ -118,34 +148,13 @@ const bubbleChart = (data) => {
 
             const brush = d3.brushX()
                 .extent([[0, 0], [scaleX(60), height]])
-                .on('start brush end', ({ selection }) => {
+                .on('start brush', d => OnBrush(d, { "y0": y0, "y1": y1, "brush": brush, "brushGroup": brushGroup }))
+                .on('end', d => {
                     if (highlight) {
                         toggleHighlight()
                         return
                     }
-                    if (activeBrush && brushGroup !== activeBrushNode) {
-                        activeBrushNode.call(activeBrush.move, null)
-                    }
-                    activeBrush = brush
-                    activeBrushNode = brushGroup
-
-                    sim.bubbles
-                        .attr('stroke', 'gray')
-                        .attr('fill', 'gray')
-
-                    if (selection) {
-                        const [x0, x1] = selection
-                        const values = sim.bubbles.filter(d => x0 < d.x && d.x < x1 && y0 < d.y && d.y < y1)
-                            .attr('fill', d => scaleColor(d.category))
-                            .data()
-
-                        tab.update(values)
-                    } else {
-                        sim.bubbles
-                            .attr('stroke', 'lightgray')
-                            .attr('fill', d => scaleColor(d.category))
-                        tab.update(data)
-                    }
+                    OnBrush(d, { "y0": y0, "y1": y1, "brush": brush, "brushGroup": brushGroup })
                 })
 
             brushGroup.call(brush)
@@ -179,6 +188,9 @@ const bubbleChart = (data) => {
 
         grouped = !grouped
         calc_height = grouped ? height + bubbleMargin : category_size * height + bubbleMargin + 1
+        sim.bubbles
+            .attr('stroke', 'lightgray')
+            .attr('fill', d => scaleColor(d.category))
         OnUpdate(true)
     }
 
@@ -187,6 +199,7 @@ const bubbleChart = (data) => {
     let highlight = false
     const toggleHighlight = () => {
         highlight = !highlight
+        sim.highlight(highlight)
 
         const demHighlightX = highlight ? demBubble.x + highlightMargin : -highlightWidth
         const repHighlightX = highlight ? repBubble.x - highlightWidth - highlightMargin : -highlightWidth
@@ -429,6 +442,7 @@ const bubbleChart = (data) => {
         height: height,
         margin: bubbleMargin,
         grouped: grouped,
+        highlighted: highlight,
         update: OnUpdate,
         categoryIndex: categoryIndex
     }

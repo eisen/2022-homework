@@ -14,6 +14,9 @@ const simulation = (data, props) => {
     }
 
     const OnMouseOver = (e, d) => {
+        if (props.highlighted) {
+            return
+        }
         const phrase = `${d.phrase.charAt(0).toUpperCase()}${d.phrase.slice(1)}`
         const partisanUse = `${d.position < 0 ? 'D' : 'R'}+ ${d.position < 0 ? -d.position.toFixed(4) : d.position.toFixed(4)}%`
         const percentage = `In ${d.total * 2}% of speeches`
@@ -63,8 +66,6 @@ const simulation = (data, props) => {
             .join('circle')
             .attr('cx', d => d.x)
             .attr('cy', d => d.y)
-            .attr('r', d => props.scaleRadius(d.total))
-            .attr('fill', d => props.scaleColor(d.category))
     }
 
     const yForce = d3.forceY().y(d => props.grouped ? (props.height / 2) : (props.categoryIndex(d.category) + 0.5) * props.height)
@@ -93,12 +94,16 @@ const simulation = (data, props) => {
         sim.force('y').initialize(data)
         sim.force('collide').initialize(data)
         sim.alpha(1)
-            .alphaTarget(0.0)
             .restart()
+    }
+
+    const OnHighlight = (value) => {
+        props.highlighted = value
     }
 
     return {
         start: OnStart,
+        highlight: OnHighlight,
         bubbles: bubbles
     }
 }       
